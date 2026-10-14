@@ -130,6 +130,7 @@
 .spectrum svg { width: 100%; height: 100%; overflow: visible; }
 .spectrum .bar { fill: var(--blue); opacity: .82; transition: opacity .2s; transform-box: fill-box; transform-origin: 50% 100%; }
 .spectrum.pre .bar { transform: scaleY(.04); }
+@media print { .spectrum.pre .bar { transform: none; } .spectrum.pre .bracket { opacity: 1; } }
 .spectrum.pre .bracket { opacity: 0; }
 .spectrum.acquire .bar { animation: ersal-rise .42s var(--ease-out) var(--d, 0ms) both; }
 .spectrum.acquire .bracket { animation: ersal-fade .3s var(--ease-out) .75s both; }
@@ -237,6 +238,8 @@
 .cov .north text, .cov .scalebar text, .cov .attr { font-family: var(--f-display); font-weight: 600; fill: var(--muted); }
 .cov .scalebar line { stroke: var(--ink); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 .cov-tip { position: absolute; z-index: 3; width: min(280px, 80%); padding: 12px 14px; background: var(--navy); color: var(--on-navy); font-size: .9rem; line-height: 1.7; pointer-events: none; box-shadow: 0 10px 24px rgba(11, 20, 51, .22); }
+:root[data-theme="dark"] .cov-tip { box-shadow: none; outline: 1px solid var(--rule-strong); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cov-tip { box-shadow: none; outline: 1px solid var(--rule-strong); } }
 .cov-tip b { display: block; font-family: var(--f-display); font-weight: 800; font-size: 1.05rem; color: #fff; }
 .cov-tip .meta { color: var(--on-navy-muted); margin-block: 2px 4px; }
 .cov-tip .meta time { color: #fff; }
