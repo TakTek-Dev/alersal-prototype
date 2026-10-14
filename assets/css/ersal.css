@@ -1,0 +1,230 @@
+/* =====================================================================
+   الإرسال — design system
+   Everything here is derived from the logo:
+   ink blue #21409A · signal red #ED1B24 · the handover gradient between
+   them (only inside the second tooth of the «س») · one cut angle 10.4°
+   measured on the letter strokes · three signal bars (56% / 68% / 100%).
+   ===================================================================== */
+
+:root {
+  /* brand inks */
+  --blue: #21409A;
+  --blue-deep: #182F74;
+  --blue-tint: #EDF0F8;
+  --red: #ED1B24;              /* marks, bars, plates with ≥18px bold text */
+  --red-ink: #C8161E;          /* red used as small text on white (5.9:1) */
+  --red-fill: #D9171F;         /* red behind white text: plates, live buttons (≥4.5:1) */
+  --grad-a: #ED1B24;
+  --grad-b: #21409A;
+  --handover: linear-gradient(90deg, var(--grad-a), var(--grad-b));
+
+  /* cool neutrals, tinted toward the blue — never warm, never beige */
+  --ground: #FFFFFF;
+  --band: #F3F5F9;
+  --band-2: #E9EDF4;
+  --rule: #E1E5EE;
+  --rule-strong: #C6CEDC;
+  --ink: #0F1428;
+  --text: #2A3042;
+  --muted: #5A6275;
+  --bar-off: #D3D9E4;
+  --tick: #9AA4B8;
+  --navy: #0B1433;
+  --navy-2: #121D45;
+  --on-navy: #E6EBF7;
+  --on-navy-muted: #A9B4D0;
+  --wave: rgba(33, 64, 154, .10);
+
+  /* the cut */
+  --cut: 10.4deg;
+  --cut-tan: .1836;
+
+  /* type */
+  --f-display: "Changa", "Readex Pro", system-ui, sans-serif;
+  --f-text: "Readex Pro", "Changa", system-ui, sans-serif;
+  --fs-hero: clamp(1.9rem, 1.15rem + 2.5vw, 3.3rem);
+  --fs-h2: clamp(1.45rem, 1.15rem + .9vw, 2rem);
+  --fs-h3: clamp(1.18rem, 1.05rem + .4vw, 1.4rem);
+  --fs-item: 1.08rem;
+  --fs-body: 1.0625rem;
+  --fs-meta: .875rem;
+  --fs-micro: .8125rem;
+
+  /* space + layout */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
+  --wrap: 1320px;
+  --gutter: clamp(16px, 3vw, 32px);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-tune: cubic-bezier(.34, 1.36, .5, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --blue: #8EA6FF; --blue-deep: #B7C6FF; --blue-tint: #18245A;
+    --red: #FF3B42; --red-ink: #FF7A7F; --grad-a: #FF3B42; --grad-b: #8EA6FF;
+    --ground: #0B1433; --band: #101B42; --band-2: #16224F; --rule: #223062; --rule-strong: #34447C;
+    --ink: #F1F4FC; --text: #D6DCEC; --muted: #9CA8C6; --bar-off: #2C3A6C; --tick: #5B6A9A;
+    --navy: #060C22; --navy-2: #0B1433; --wave: rgba(142, 166, 255, .10);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --blue: #8EA6FF; --blue-deep: #B7C6FF; --blue-tint: #18245A;
+  --red: #FF3B42; --red-ink: #FF7A7F; --grad-a: #FF3B42; --grad-b: #8EA6FF;
+  --ground: #0B1433; --band: #101B42; --band-2: #16224F; --rule: #223062; --rule-strong: #34447C;
+  --ink: #F1F4FC; --text: #D6DCEC; --muted: #9CA8C6; --bar-off: #2C3A6C; --tick: #5B6A9A;
+  --navy: #060C22; --navy-2: #0B1433; --wave: rgba(142, 166, 255, .10);
+  color-scheme: dark;
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: 96px; }
+body {
+  margin: 0; background: var(--ground); color: var(--text);
+  font-family: var(--f-text); font-size: var(--fs-body); line-height: 1.9; font-weight: 400;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  overflow-x: clip;
+}
+h1, h2, h3, h4, p, ul, ol, figure, blockquote { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+img, svg, video { display: block; max-width: 100%; }
+img { height: auto; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--blue); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+::selection { background: var(--blue); color: #fff; }
+html { scrollbar-color: var(--rule-strong) transparent; scrollbar-width: thin; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--rule-strong); border: 3px solid var(--ground); }
+::-webkit-scrollbar-track { background: transparent; }
+.num, time { font-variant-numeric: tabular-nums; }
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { max-width: var(--wrap); margin-inline: auto; padding-inline: var(--gutter); }
+.ltr { direction: ltr; unicode-bidi: isolate; display: inline-block; }
+.skip { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 50; background: var(--blue); color: #fff; padding: 10px 16px; font-family: var(--f-display); font-weight: 700; }
+.skip:focus { top: 12px; color: #fff; }
+
+/* headings are Changa: squared Kufic, cut terminals like the logo's strokes */
+.display, h1, h2, h3 { font-family: var(--f-display); color: var(--ink); letter-spacing: normal; }
+
+/* ---------- the signal: three bars, exactly the logo's teeth ---------- */
+.sig { direction: ltr; display: inline-flex; align-items: flex-end; gap: .14em; height: 1em; flex: none; vertical-align: -.08em; }
+.sig i { display: block; width: .3em; background: var(--bar-off); transform: skewX(calc(var(--cut) * -1)); transform-origin: bottom; }
+.sig i:nth-child(1) { height: 56%; }
+.sig i:nth-child(2) { height: 68%; }
+.sig i:nth-child(3) { height: 100%; }
+.sig[data-l="1"] i:nth-child(1),
+.sig[data-l="2"] i:nth-child(1),
+.sig[data-l="3"] i:nth-child(1) { background: var(--red); }
+.sig[data-l="2"] i:nth-child(2),
+.sig[data-l="3"] i:nth-child(2) { background: var(--handover); }
+.sig[data-l="3"] i:nth-child(3) { background: var(--blue); }
+.sig.stale i { filter: saturate(.15); opacity: .55; }
+.sig.closed i:nth-child(1) { background: var(--red); }
+.sig.closed i:nth-child(2), .sig.closed i:nth-child(3) {
+  background: repeating-linear-gradient(-79.6deg, var(--bar-off) 0 2px, transparent 2px 4px);
+}
+
+/* ---------- the cut: parallelograms at 10.4° ---------- */
+.plate {
+  --h: 1.75em;
+  display: inline-flex; align-items: center; height: var(--h);
+  padding-inline: calc(var(--h) * var(--cut-tan) + .55em);
+  font-family: var(--f-display); font-weight: 700; font-size: var(--fs-meta); line-height: 1;
+  color: #fff; background: var(--red-fill);
+  clip-path: polygon(calc(var(--h) * var(--cut-tan)) 0, 100% 0, calc(100% - var(--h) * var(--cut-tan)) 100%, 0 100%);
+  white-space: nowrap;
+}
+.plate.blue { background: var(--blue); }
+:root[data-theme="dark"] .plate.blue { color: #0B1433; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plate.blue { color: #0B1433; } }
+.plate.ghost { background: var(--band-2); color: var(--ink); }
+
+/* inline newsroom prefix, written the way the desk writes it: «متابعة|» */
+.pfx { font-family: var(--f-display); font-weight: 700; color: var(--blue); white-space: nowrap; }
+.pfx::after {
+  content: ""; display: inline-block; width: .16em; height: .95em; margin-inline: .38em .42em;
+  background: currentColor; transform: skewX(calc(var(--cut) * -1)); vertical-align: -.12em;
+}
+.pfx.urgent { color: var(--red-ink); }
+.pfx.src { color: var(--muted); }
+
+/* buttons: one slanted inline-end edge */
+.btn {
+  --h: 46px; flex: none; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: var(--h); padding-inline: 18px calc(18px + var(--h) * var(--cut-tan));
+  font-family: var(--f-display); font-weight: 700; font-size: .95rem; line-height: 1;
+  background: var(--blue); color: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, calc(var(--h) * var(--cut-tan)) 100%);
+  transition: background-color .2s var(--ease-out);
+}
+.btn:hover, .btn:focus-visible { background: var(--blue-deep); color: #fff; }
+:root[data-theme="dark"] .btn:not(.line), :root[data-theme="dark"] .btn:not(.line):hover { color: #0B1433; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn:not(.line), :root:not([data-theme="light"]) .btn:not(.line):hover { color: #0B1433; } }
+.btn.line { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--rule-strong); clip-path: none; padding-inline: 18px; }
+.btn.line:hover { box-shadow: inset 0 0 0 1.5px var(--blue); color: var(--blue); }
+.icon-btn { width: 44px; height: 44px; display: inline-grid; place-items: center; color: var(--ink); }
+.icon-btn:hover { color: var(--blue); }
+.icon-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: square; }
+
+/* ---------- logo mark (inline SVG, themable) ---------- */
+.ersal-mark { --logo-word: var(--blue); --logo-red: var(--red); --logo-grad-a: #C0304C; --logo-grad-b: #2F4496; display: block; height: auto; }
+.ersal-mark .m-word { fill: var(--logo-word); }
+.ersal-mark .m-latin, .ersal-mark .m-bar-1 { fill: var(--logo-red); }
+.ersal-mark .m-bar-2 { fill: url(#ersal-handover); }
+:root[data-theme="dark"] .ersal-mark { --logo-word: #FFFFFF; --logo-grad-a: #FF3B42; --logo-grad-b: #8EA6FF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ersal-mark { --logo-word: #FFFFFF; --logo-grad-a: #FF3B42; --logo-grad-b: #8EA6FF; } }
+.on-navy .ersal-mark { --logo-word: #FFFFFF; --logo-grad-a: #FF3B42; --logo-grad-b: #8EA6FF; }
+.ersal-mark .m-bar { transform-box: fill-box; transform-origin: 0 100%; }
+/* signal acquired: the two teeth rise like a phone finding the network */
+.acquire .m-bar-1 { animation: ersal-rise .55s var(--ease-out) .15s both; }
+.acquire .m-bar-2 { animation: ersal-rise .6s var(--ease-out) .32s both; }
+@keyframes ersal-rise { from { transform: scaleY(.04); } to { transform: scaleY(1); } }
+
+/* ---------- carrier wave: the contour lines of their cover ---------- */
+.carrier { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.carrier svg { position: absolute; inset-block: 0; inset-inline-start: 0; width: 200%; height: 100%; }
+.carrier path { fill: none; stroke: var(--wave); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.carrier.drift svg { animation: carrier-drift 60s linear infinite; }
+@keyframes carrier-drift { to { transform: translateX(50%); } }
+
+/* ---------- section header: every section is a station on the dial ---------- */
+.station { display: flex; align-items: center; gap: var(--s4); margin-bottom: var(--s5); }
+.station h2 { font-size: var(--fs-h2); font-weight: 800; line-height: 1.45; flex: none; }
+.station .scale {
+  position: relative; flex: 1; height: 12px; align-self: center; min-width: 40px;
+  background:
+    linear-gradient(var(--rule-strong), var(--rule-strong)) bottom / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px 9px) bottom / 100% 6px no-repeat;
+  opacity: .7;
+}
+.station .scale::after { content: ""; position: absolute; bottom: 0; inset-inline-start: var(--pos, 0%); width: 2px; height: 16px; background: var(--red); transform: skewX(calc(var(--cut) * -1)); transform-origin: bottom; opacity: var(--pos-on, 0); }
+.station .more { flex: none; font-family: var(--f-display); font-weight: 700; font-size: var(--fs-meta); color: var(--blue); display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+.station .more svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.station .note { flex: none; font-size: var(--fs-micro); color: var(--muted); }
+
+/* ---------- media ---------- */
+.ph { position: relative; display: block; overflow: hidden; background: var(--band-2); }
+.ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease-out); }
+a:hover .ph img, .ph:hover img { transform: scale(1.025); }
+.cut-end { clip-path: polygon(calc(var(--cut-h, 100%) * 0 + var(--o, 72px)) 0, 100% 0, 100% 100%, 0 100%); }
+.play { position: absolute; inset-inline-end: 12px; inset-block-end: 12px; width: 40px; height: 40px; display: grid; place-items: center; background: rgba(11,20,51,.78); color: #fff; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+.play svg { width: 16px; height: 16px; fill: currentColor; }
+.dur { position: absolute; inset-inline-start: 10px; inset-block-end: 10px; font-family: var(--f-display); font-weight: 600; font-size: var(--fs-micro); color: #fff; background: rgba(11,20,51,.72); padding: 2px 8px; direction: ltr; }
+
+/* meta line: time · place */
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-family: var(--f-display); font-size: var(--fs-meta); font-weight: 600; color: var(--muted); line-height: 1.5; }
+.meta time { color: var(--ink); font-weight: 700; }
+.meta .place::before { content: ""; display: inline-block; width: 1px; height: .85em; background: var(--rule-strong); margin-inline-end: 10px; vertical-align: -.1em; transform: skewX(calc(var(--cut) * -1)); }
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  .carrier.drift svg { animation: none; }
+}

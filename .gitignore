@@ -1,0 +1,7 @@
+# working files stay local; only the site is published
+.claude/
+.impeccable/
+research/*
+!research/brand/
+PRODUCT.md
+DESIGN*
