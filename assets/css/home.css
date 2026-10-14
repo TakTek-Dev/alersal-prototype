@@ -44,6 +44,10 @@
 .tuner-list .live-tab { color: var(--red-ink); display: inline-flex; gap: 8px; }
 .needle { position: absolute; bottom: 0; left: 0; width: 3px; height: 30px; background: var(--red); transform: translateX(var(--nx, 0)) skewX(calc(var(--cut) * -1)); transform-origin: bottom; pointer-events: none; opacity: 0; }
 .tuner.is-ready .needle { opacity: 1; transition: transform .55s var(--ease-tune); }
+.deck-ctrl .ic-stop { opacity: 0; transform: scale(.6); }
+.deck-ctrl svg path { transform-box: fill-box; transform-origin: center; transition: opacity .15s var(--ease-out), transform .15s var(--ease-out); }
+.deck-ctrl [aria-pressed="true"] .ic-play { opacity: 0; transform: scale(.6); }
+.deck-ctrl [aria-pressed="true"] .ic-stop { opacity: 1; transform: none; }
 .needle::after { content: ""; position: absolute; bottom: 0; inset-inline-start: -5px; width: 13px; height: 3px; background: var(--red); }
 
 /* ---------- on air: the lead + the broadcast log ---------- */
@@ -71,7 +75,7 @@
 .log-head h2 { font-size: 1.55rem; font-weight: 800; line-height: 1.3; }
 .on-air { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-display); font-weight: 700; font-size: var(--fs-meta); color: var(--red-ink); }
 .on-air .sig { font-size: 15px; }
-.on-air .sig i:nth-child(3) { animation: carrier-beat 2.4s var(--ease-out) infinite; }
+.on-air .sig i:nth-child(3) { animation: carrier-beat 2.4s cubic-bezier(.37, 0, .63, 1) infinite; }
 @keyframes carrier-beat { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 .log-head .last { margin-inline-start: auto; display: flex; flex-direction: column; align-items: flex-end; font-family: var(--f-display); font-size: var(--fs-micro); line-height: 1.25; color: var(--muted); }
 .log-head .last time { color: var(--red-ink); font-weight: 800; font-size: 1.45rem; line-height: 1.1; }
@@ -92,7 +96,9 @@
 .play-s::after { content: ""; position: absolute; inset: 6px 6px 6px 7px; background: #fff; clip-path: polygon(0 0, 100% 50%, 0 100%); }
 .log-item.fresh .log-t { color: var(--red-ink); }
 .since { display: flex; align-items: center; gap: 10px; padding-block: 8px; font-family: var(--f-display); font-weight: 700; font-size: var(--fs-micro); color: var(--red-ink); }
-.since::after { content: ""; flex: 1; height: 1px; background: var(--handover); }
+.since::after { content: ""; flex: 1; height: 1px; background: var(--handover); transform-origin: 100% 50%; }
+.since.draw::after { animation: since-draw .48s var(--ease-out) .36s both; }
+@keyframes since-draw { from { transform: scaleX(0); } }
 .log-all { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; font-family: var(--f-display); font-weight: 700; color: var(--blue); border-bottom: 2px solid var(--ink); }
 .log-all svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
 
@@ -122,7 +128,11 @@
 .pulse-total b { display: block; font-size: 2.6rem; font-weight: 800; color: var(--ink); line-height: 1.1; }
 .spectrum { position: relative; height: 210px; }
 .spectrum svg { width: 100%; height: 100%; overflow: visible; }
-.spectrum .bar { fill: var(--blue); opacity: .82; transition: opacity .2s; }
+.spectrum .bar { fill: var(--blue); opacity: .82; transition: opacity .2s; transform-box: fill-box; transform-origin: 50% 100%; }
+.spectrum.pre .bar { transform: scaleY(.04); }
+.spectrum.pre .bracket { opacity: 0; }
+.spectrum.acquire .bar { animation: ersal-rise .42s var(--ease-out) var(--d, 0ms) both; }
+.spectrum.acquire .bracket { animation: ersal-fade .3s var(--ease-out) .75s both; }
 .spectrum .bar.burst { fill: url(#pulse-handover); opacity: 1; }
 .spectrum .bar.zero { fill: var(--bar-off); opacity: 1; }
 .spectrum .bar.hot { opacity: 1; fill: var(--ink); }
@@ -172,6 +182,7 @@
 .rp-v { width: 14px; height: 14px; margin-top: 7px; background: var(--muted); clip-path: polygon(0 0, 100% 50%, 0 100%); }
 .rp-more { display: none; }
 .deck.playing .rp-item { opacity: .38; }
+.deck.scrubbing .rp-item { transition-duration: .12s; }
 .deck.playing .rp-item.lit { opacity: 1; }
 .deck.playing .rp-item.now { background: var(--blue-tint); }
 
@@ -207,8 +218,8 @@
 .cov .rd1 { fill: none; stroke: var(--tick); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
 .cov .ring { fill: none; stroke: var(--blue); stroke-opacity: .32; stroke-width: 1; stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
 .cov .ring-l { font-family: var(--f-display); font-weight: 600; fill: var(--blue); opacity: .7; }
-.cov .wave { fill: none; stroke: var(--blue); stroke-width: 1.2; vector-effect: non-scaling-stroke; opacity: 0; transform-box: fill-box; transform-origin: center; animation: cov-wave 7s var(--ease-out) infinite; }
-.cov .wave.w2 { animation-delay: 3.5s; }
+.cov-wave { position: absolute; aspect-ratio: 1; translate: -50% -50%; border: 1.2px solid var(--blue); border-radius: 50%; pointer-events: none; opacity: 0; animation: cov-wave 7s var(--ease-out) infinite; }
+.cov-wave.w2 { animation-delay: 3.5s; }
 @keyframes cov-wave { 0% { transform: scale(.05); opacity: .45; } 100% { transform: scale(1); opacity: 0; } }
 .cov .base { fill: var(--ink); }
 .cov .spike { fill: var(--blue); transition: fill .2s; }

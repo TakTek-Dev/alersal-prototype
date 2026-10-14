@@ -25,16 +25,72 @@
     });
   }
   themeBtns.forEach(b => b.addEventListener('click', () => {
-    root.dataset.theme = isDark() ? 'light' : 'dark';
-    store.set('ersal:theme', root.dataset.theme);
-    syncTheme();
-    document.dispatchEvent(new CustomEvent('ersal:theme'));
+    const flip = () => {
+      root.dataset.theme = isDark() ? 'light' : 'dark';
+      store.set('ersal:theme', root.dataset.theme);
+      syncTheme();
+      document.dispatchEvent(new CustomEvent('ersal:theme'));
+    };
+    if (document.startViewTransition && !reduce) document.startViewTransition(flip); else flip();
   }));
   syncTheme();
 
-  /* ---------- logo: the teeth rise once per visit ---------- */
+  /* ---------- loader: search → lock → the mark flies into the header ---------- */
+  const loader = document.getElementById('ersal-loader');
+  const loading = !!loader && root.classList.contains('is-loading');
+  let isLoaded = false;
+  function loaded() {
+    if (isLoaded) return; isLoaded = true;
+    root.classList.remove('is-loading');
+    if (loader) loader.remove();
+    try { sessionStorage.setItem('ersal:loader', '1'); sessionStorage.setItem('ersal:acq', '1'); } catch (e) {}
+    document.dispatchEvent(new CustomEvent('ersal:ready'));
+  }
+  const whenReady = fn => (loading && !isLoaded) ? document.addEventListener('ersal:ready', fn, { once: true }) : fn();
+  if (loading) {
+    const t0 = performance.now(), mark = $('.ld-mark', loader);
+    const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+    Promise.race([fonts, new Promise(r => setTimeout(r, 2200))])
+      .then(() => new Promise(r => setTimeout(r, Math.max(0, 700 - (performance.now() - t0)))))
+      .then(() => {
+        // lock from wherever each tooth is in its search, so the bars never jump
+        $$('.m-bar', loader).forEach(b => {
+          const m = getComputedStyle(b).transform.match(/matrix\(([^)]+)\)/);
+          b.style.setProperty('--from', Math.max(.06, m ? parseFloat(m[1].split(',')[3]) : .06).toFixed(3));
+        });
+        loader.classList.add('is-locked');
+        setTimeout(fly, 540);
+      });
+    function fly() {
+      loader.classList.add('is-leaving');
+      const target = $('.mast .brand .ersal-mark, .bk-bar .mini .ersal-mark');
+      const m = mark.getBoundingClientRect(), t = target && target.getBoundingClientRect();
+      const inView = t && t.width > 0 && t.bottom > 0 && t.top < innerHeight;
+      if (!inView || !mark.animate) { // page restored mid-scroll: no target to land on, just clear
+        if (mark.animate) mark.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+        setTimeout(loaded, 520);
+        return;
+      }
+      mark.animate(
+        [{ transform: 'translate(0, 0) scale(1)' }, { transform: `translate(${t.left - m.left}px, ${t.top - m.top}px) scale(${t.width / m.width})` }],
+        { duration: 600, easing: 'cubic-bezier(.77, 0, .175, 1)', fill: 'forwards' }
+      ).onfinish = loaded;
+      setTimeout(loaded, 900); // a throttled tab may never deliver onfinish
+    }
+  }
+
+  /* ---------- photos fade in as they load ---------- */
+  if (!reduce) $$('.ph img').forEach(img => {
+    if (img.complete) return;
+    img.classList.add('img-wait');
+    const done = () => img.classList.remove('img-wait');
+    img.addEventListener('load', done, { once: true });
+    img.addEventListener('error', done, { once: true });
+  });
+
+  /* ---------- logo: the teeth rise once per visit (the loader already did it on first load) ---------- */
   $$('.js-acquire, .mast .ersal-mark').forEach(mark => {
-    if (reduce) return;
+    if (reduce || (loading && !mark.classList.contains('js-acquire'))) return;
     let seen = null; try { seen = sessionStorage.getItem('ersal:acq'); } catch (e) {}
     if (mark.classList.contains('js-acquire') || !seen) {
       mark.classList.add('acquire');
@@ -120,17 +176,37 @@
     }
     list.addEventListener('pointerleave', () => place(tunedTo));
     function layout() {
-      drawTicks(); place(tunedTo);
+      drawTicks();
+      needle.style.transition = 'none'; place(tunedTo); void needle.offsetWidth; needle.style.transition = '';
       if (mobile.matches) {
         const lr = list.getBoundingClientRect(), r = current.getBoundingClientRect();
         list.scrollLeft += (r.left + r.width / 2) - (lr.left + lr.width / 2);
         current.classList.add('tuned');
       }
-      requestAnimationFrame(() => tuner.classList.add('is-ready'));
     }
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+    const fontsSettled = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 1500))]);
+    fontsSettled.then(() => { layout(); markStations(); });
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', debounce(() => { layout(); markStations(); }));
     layout();
     addEventListener('resize', debounce(layout));
+    if (loading && !reduce && !mobile.matches) {
+      // the loader handed over: sweep from the far end of the dial onto the current station
+      whenReady(() => {
+        const ir = inner.getBoundingClientRect(), tr = ticks.getBoundingClientRect();
+        needle.style.transition = 'none';
+        needle.style.setProperty('--nx', (tr.left - ir.left).toFixed(1) + 'px');
+        tuner.classList.add('is-ready');
+        void needle.offsetWidth;
+        needle.style.transition = 'transform .9s var(--ease-tune), opacity .2s ease';
+        place(tunedTo);
+        let cleared = false;
+        const clear = () => { if (!cleared) { cleared = true; needle.style.transition = ''; } };
+        needle.addEventListener('transitionend', clear, { once: true });
+        setTimeout(clear, 1000);
+      });
+    } else {
+      fontsSettled.then(() => tuner.classList.add('is-ready'));
+    }
   }
 
   /* ---------- a station head marks its own station on the tuner's scale (only sections the tuner carries) ---------- */
@@ -166,11 +242,24 @@
     const rows = $$('.log-item', log), ids = rows.map(li => +li.dataset.id);
     const last = +(store.get('ersal:lastSeen') || 0);
     if (last && ids[0] > last) {
-      let marked = false;
+      let marked = false, since = null;
       rows.forEach(li => {
         if (+li.dataset.id > last) li.classList.add('fresh');
-        else if (!marked) { const d = document.createElement('li'); d.className = 'since'; d.textContent = 'وقفت هنا في زيارتك السابقة'; li.before(d); marked = true; }
+        else if (!marked) { since = document.createElement('li'); since.className = 'since'; since.textContent = 'وقفت هنا في زيارتك السابقة'; li.before(since); marked = true; }
       });
+      if (!reduce) {
+        const fresh = rows.filter(li => li.classList.contains('fresh')).slice(0, 3);
+        if (loading) fresh.forEach(li => li.classList.add('arrive-wait'));
+        whenReady(() => {
+          fresh.slice().reverse().forEach((li, i) => {
+            li.style.setProperty('--d', (120 + i * 120) + 'ms');
+            li.classList.remove('arrive-wait');
+            li.classList.add('arrive');
+            li.addEventListener('animationend', () => { li.classList.remove('arrive'); li.style.removeProperty('--d'); }, { once: true });
+          });
+          if (since) since.classList.add('draw');
+        });
+      }
     }
     setTimeout(() => store.set('ersal:lastSeen', String(ids[0])), 2500);
   }
@@ -202,7 +291,7 @@
         const burst = d.t >= '2026-10-13T10:00' && d.t < '2026-10-13T14:30';
         if (burst) { burstMin = Math.min(burstMin, x); burstMax = Math.max(burstMax, x + bw + o); burstTop = Math.min(burstTop, base - h); }
         const cls = 'bar' + (d.n === 0 ? ' zero' : '') + (burst ? ' burst' : '');
-        g += `<path class="${cls}" d="M${x.toFixed(1)} ${base}L${(x + bw).toFixed(1)} ${base}L${(x + bw + o).toFixed(1)} ${(base - h).toFixed(1)}L${(x + o).toFixed(1)} ${(base - h).toFixed(1)}Z"/>`;
+        g += `<path class="${cls}" style="--d:${Math.round(k / Math.max(1, n - 1) * 600)}ms" d="M${x.toFixed(1)} ${base}L${(x + bw).toFixed(1)} ${base}L${(x + bw + o).toFixed(1)} ${(base - h).toFixed(1)}L${(x + o).toFixed(1)} ${(base - h).toFixed(1)}Z"/>`;
         bars.push({ x, x2: x + bw + o, d });
         const hh = d.t.slice(11, 16), dd = +d.t.slice(8, 10);
         if (hh === '00:00') g += `<g class="day"><line x1="${(x + bw + step * .2).toFixed(1)}" x2="${(x + bw + step * .2).toFixed(1)}" y1="${top - 26}" y2="${base}" stroke-dasharray="2 3"/><text x="${(x + bw - 4).toFixed(1)}" y="${top - 14}" text-anchor="end">${DAYS[dd]}</text></g>`;
@@ -218,20 +307,34 @@
     }
     spec.addEventListener('pointermove', e => {
       const r = spec.getBoundingClientRect(), x = e.clientX - r.left;
-      const b = bars.find(b => x >= b.x - 2 && x <= b.x2 + 2);
+      const i = bars.findIndex(b => x >= b.x - 2 && x <= b.x2 + 2), b = bars[i];
+      const paths = $$('.bar', spec);
+      paths.forEach((pth, j) => pth.classList.toggle('hot', j === i));
       if (!b) { tip.classList.remove('on'); return; }
       const t = b.d.t, dd = +t.slice(8, 10), from = t.slice(11, 16);
       const endM = (+from.slice(0, 2) * 60 + +from.slice(3, 5) + b.d.span) % 1440;
       const to = String(Math.floor(endM / 60)).padStart(2, '0') + ':' + String(endM % 60).padStart(2, '0');
       tip.innerHTML = `<b>${b.d.n ? plural(b.d.n) : 'لا أخبار'}</b><br>${DAYS[dd]} <span class="ltr">${from}–${to}</span>`;
-      tip.style.left = (b.x + (b.x2 - b.x) / 2 - tip.offsetWidth) + 'px';
       tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, b.x + (b.x2 - b.x) / 2 - tip.offsetWidth / 2)) + 'px';
       tip.style.transform = 'translateY(-100%)';
       tip.style.top = '18px';
       tip.classList.add('on');
     });
-    spec.addEventListener('pointerleave', () => tip.classList.remove('on'));
+    spec.addEventListener('pointerleave', () => { tip.classList.remove('on'); $$('.bar', spec).forEach(pth => pth.classList.remove('hot')); });
+    let pulseSeen = true;
+    try { pulseSeen = !!sessionStorage.getItem('ersal:pulse'); } catch (e) {}
+    if (!reduce && !pulseSeen && 'IntersectionObserver' in window) spec.classList.add('pre');
     draw();
+    if (spec.classList.contains('pre')) whenReady(() => {
+      const io = new IntersectionObserver(es => {
+        if (!es.some(en => en.isIntersecting)) return;
+        io.disconnect();
+        spec.classList.replace('pre', 'acquire');
+        try { sessionStorage.setItem('ersal:pulse', '1'); } catch (e) {}
+        setTimeout(() => spec.classList.remove('acquire'), 1300);
+      }, { threshold: .35 });
+      io.observe(spec);
+    });
     addEventListener('resize', debounce(draw));
   }
 
@@ -258,16 +361,21 @@
       ticks.setAttribute('viewBox', `0 0 ${w} ${h}`);
       ticks.innerHTML = s;
     }
+    let shown = '';
     function render(m, follow = true) {
-      clockEl.textContent = fmt(m);
+      const label = fmt(m);
+      if (label !== shown) { shown = label; clockEl.textContent = label; }
       fill.style.setProperty('--p', ((m - t0) / (t1 - t0) * 100).toFixed(2) + '%');
       let lit = -1;
       items.forEach((li, i) => { const on = mins[i] <= m; li.classList.toggle('lit', on); if (on) lit = i; });
       scale.setAttribute('aria-valuenow', String(Math.max(0, lit)));
-      scale.setAttribute('aria-valuetext', `${fmt(m)}، ${lit + 1} من ${items.length}`);
+      if (scale.dataset.lit !== String(lit) || scale.dataset.t !== label) { scale.dataset.lit = String(lit); scale.dataset.t = label; scale.setAttribute('aria-valuetext', `${label}، ${lit + 1} من ${items.length}`); }
       if (lit !== lastLit) {
         items.forEach((li, i) => li.classList.toggle('now', i === lit));
-        if (follow && lit >= 0 && list.scrollHeight > list.clientHeight + 2) { const li = items[lit]; list.scrollTop = li.offsetTop - list.clientHeight / 2 + li.offsetHeight / 2; }
+        if (follow && lit >= 0 && list.scrollHeight > list.clientHeight + 2) {
+          const li = items[lit], top = li.offsetTop - list.clientHeight / 2 + li.offsetHeight / 2;
+          list.scrollTo({ top, behavior: playing && !reduce ? 'smooth' : 'auto' });
+        }
         lastLit = lit;
       }
     }
@@ -276,7 +384,8 @@
       const r = scale.getBoundingClientRect(), p = Math.max(0, Math.min(1, (r.right - clientX) / r.width));
       deck.classList.add('playing'); render(t0 + p * (t1 - t0));
     };
-    scale.addEventListener('pointerdown', e => { if (playing) stop(); scale.setPointerCapture(e.pointerId); scrubTo(e.clientX); });
+    scale.addEventListener('pointerdown', e => { if (playing) stop(); deck.classList.add('scrubbing'); scale.setPointerCapture(e.pointerId); scrubTo(e.clientX); });
+    scale.addEventListener('lostpointercapture', () => deck.classList.remove('scrubbing'));
     scale.addEventListener('pointermove', e => { if (scale.hasPointerCapture(e.pointerId)) scrubTo(e.clientX); });
     scale.addEventListener('keydown', e => {
       const keys = { ArrowLeft: 1, ArrowUp: 1, ArrowRight: -1, ArrowDown: -1, Home: -999, End: 999 };
@@ -327,7 +436,6 @@
         s += `<circle class="ring" cx="${cx}" cy="${cy}" r="${r}"/>`;
         if (ly < M.h - 44 * k && cx - r * .7071 > 60 * k) s += `<text class="ring-l" direction="rtl" x="${cx - r * .7071 - 3 * k}" y="${cy + r * .7071 + 12 * k}" font-size="${small}">${km} كم</text>`;
       });
-      if (!reduce) s += `<circle class="wave" cx="${cx}" cy="${cy}" r="${20 * M.kmpx}"/><circle class="wave w2" cx="${cx}" cy="${cy}" r="${20 * M.kmpx}"/>`;
       // labels: largest first, keep only what fits
       const boxes = [{ x1: cx - 6 * k, x2: cx + 96 * k, y1: cy - 8 * k, y2: cy + 24 * k }];
       const hit = b => b.x1 < 0 || b.x2 > M.w || b.y1 < 0 || boxes.some(o => !(b.x2 < o.x1 || b.x1 > o.x2 || b.y2 < o.y1 || b.y1 > o.y2));
@@ -379,6 +487,10 @@
       s += `<text class="attr" x="${M.w - pad}" y="${M.h - pad + 4 * k}" text-anchor="end" font-size="${9.5 * k}">© OpenStreetMap contributors</text>`;
       s += '</svg>';
       cov.innerHTML = s;
+      if (!reduce) {
+        const pos = `left:${(cx / M.w * 100).toFixed(2)}%;top:${(cy / M.h * 100).toFixed(2)}%;width:${(40 * M.kmpx / M.w * 100).toFixed(2)}%`;
+        cov.insertAdjacentHTML('beforeend', `<span class="cov-wave" style="${pos}" aria-hidden="true"></span><span class="cov-wave w2" style="${pos}" aria-hidden="true"></span>`);
+      }
       $$('.pt', cov).forEach(g => {
         g.addEventListener('pointerenter', () => show(g.dataset.n));
         g.addEventListener('focus', () => show(g.dataset.n));
@@ -425,7 +537,12 @@
       sl.classList.toggle('fits', fits);
       sl.classList.toggle('more-start', x > 2);
       sl.classList.toggle('more-end', !fits && x < room - 2);
-      if (bar) { const w = fits ? 100 : track.clientWidth / track.scrollWidth * 100; bar.style.setProperty('--w', w.toFixed(2) + '%'); bar.style.setProperty('--x', (fits ? 0 : x / room * (100 - w)).toFixed(2) + '%'); }
+      if (bar) {
+        const w = fits ? 100 : track.clientWidth / track.scrollWidth * 100, W = bar.parentElement.clientWidth;
+        const xPx = fits ? 0 : (W - W * w / 100) * x / room;
+        bar.style.setProperty('--w', w.toFixed(2) + '%');
+        bar.style.setProperty('--tx', (rtl ? -xPx : xPx).toFixed(1) + 'px');
+      }
       if (prev) prev.disabled = x <= 2;
       if (next) next.disabled = fits || x >= room - 2;
     }

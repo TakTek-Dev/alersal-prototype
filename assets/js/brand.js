@@ -20,9 +20,11 @@
     const go = s => { labels.forEach(l => l.classList.toggle('on', l === s)); needle.style.setProperty('--x', x(s) + 'px'); };
     const settle = () => go(labels[0]);
     settle(); addEventListener('resize', settle);
+    let timers = [];
     $('.js-tune-btn').addEventListener('click', () => {
+      timers.forEach(clearTimeout);
       const seq = [labels[2], labels[1], labels[3], labels[0]];
-      seq.forEach((s, i) => setTimeout(() => go(s), reduce ? 0 : i * 700));
+      timers = seq.map((s, i) => setTimeout(() => go(s), reduce ? 0 : i * 700));
     });
   }
   // the idea card's mini tuner sits on its first label

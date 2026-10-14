@@ -55,6 +55,7 @@
   --gutter: clamp(16px, 3vw, 32px);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
   --ease-tune: cubic-bezier(.34, 1.36, .5, 1);
+  --ease-in-out: cubic-bezier(.77, 0, .175, 1);   /* on-screen movement */
 
   color-scheme: light;
 }
@@ -161,8 +162,9 @@ html { scrollbar-color: var(--rule-strong) transparent; scrollbar-width: thin; }
   font-family: var(--f-display); font-weight: 700; font-size: .95rem; line-height: 1;
   background: var(--blue); color: #fff;
   clip-path: polygon(0 0, 100% 0, 100% 100%, calc(var(--h) * var(--cut-tan)) 100%);
-  transition: background-color .2s var(--ease-out);
+  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform 160ms var(--ease-out);
 }
+.btn:active { transform: scale(.97); }
 .btn:hover, .btn:focus-visible { background: var(--blue-deep); color: #fff; }
 .btn:focus-visible, .sl-btn:focus-visible, .plate:focus-visible { clip-path: none; outline: 2px solid var(--blue); outline-offset: 3px; }
 :root[data-theme="dark"] .btn:not(.line), :root[data-theme="dark"] .btn:not(.line):hover { color: #0B1433; }
@@ -211,8 +213,9 @@ html { scrollbar-color: var(--rule-strong) transparent; scrollbar-width: thin; }
 
 /* ---------- media ---------- */
 .ph { position: relative; display: block; overflow: hidden; background: var(--band-2); }
-.ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease-out); }
-a:hover .ph img, .ph:hover img { transform: scale(1.025); }
+.ph img { width: 100%; height: 100%; object-fit: cover; transition: opacity .24s var(--ease-out), transform .8s var(--ease-out); }
+.ph img.img-wait { opacity: 0; }
+@media (hover: hover) and (pointer: fine) { a:hover .ph img, a.ph:hover img { transform: scale(1.025); } }
 .play { position: absolute; inset-inline-end: 12px; inset-block-end: 12px; width: 40px; height: 40px; display: grid; place-items: center; background: rgba(11,20,51,.78); color: #fff; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
 .play svg { width: 16px; height: 16px; fill: currentColor; }
 .dur { position: absolute; inset-inline-start: 10px; inset-block-end: 10px; font-family: var(--f-display); font-weight: 600; font-size: var(--fs-micro); color: #fff; background: rgba(11,20,51,.72); padding: 2px 8px; direction: ltr; }
@@ -234,21 +237,56 @@ a:hover .ph img, .ph:hover img { transform: scale(1.025); }
 .slider.more-start:not(.more-end) .js-track { mask-image: linear-gradient(to left, transparent 0, #000 64px); }
 .sl-progress { position: relative; height: 14px; margin-top: var(--s4);
   background: linear-gradient(var(--rule-strong), var(--rule-strong)) bottom / 100% 1px no-repeat, repeating-linear-gradient(90deg, var(--tick) 0 1px, transparent 1px 9px) bottom / 100% 5px no-repeat; }
-.sl-progress i { position: absolute; bottom: 0; inset-inline-start: var(--x, 0%); width: var(--w, 30%); height: 3px; background: var(--blue); transition: inset-inline-start .25s var(--ease-out), width .25s var(--ease-out); }
+.sl-progress i { position: absolute; bottom: 0; inset-inline-start: 0; width: var(--w, 30%); height: 3px; background: var(--blue); transform: translateX(var(--tx, 0px)); }
 .sl-progress i::after { content: ""; position: absolute; bottom: 0; inset-inline-end: -1px; width: 3px; height: 14px; background: var(--red); transform: skewX(calc(var(--cut) * -1)); transform-origin: bottom; }
 .slider.fits .sl-progress { display: none; }
 .on-navy .sl-progress { background: linear-gradient(rgba(255,255,255,.3), rgba(255,255,255,.3)) bottom / 100% 1px no-repeat, repeating-linear-gradient(90deg, rgba(255,255,255,.4) 0 1px, transparent 1px 9px) bottom / 100% 5px no-repeat; }
 .on-navy .sl-progress i { background: #8EA6FF; }
 .sl-ctrl { display: flex; gap: 6px; flex: none; }
 .sl-btn { --h: 44px; width: 52px; height: var(--h); display: grid; place-items: center; color: var(--ink); background: var(--band-2);
-  clip-path: polygon(calc(var(--h) * var(--cut-tan)) 0, 100% 0, calc(100% - var(--h) * var(--cut-tan)) 100%, 0 100%); transition: background-color .2s, color .2s; }
+  clip-path: polygon(calc(var(--h) * var(--cut-tan)) 0, 100% 0, calc(100% - var(--h) * var(--cut-tan)) 100%, 0 100%); transition: background-color .2s ease, color .2s ease, opacity .2s ease, transform 160ms var(--ease-out); }
+.sl-btn:active:not(:disabled) { transform: scale(.97); }
 .sl-btn:hover { background: var(--blue); color: #fff; }
 .sl-btn:disabled { opacity: .35; cursor: default; background: var(--band-2); color: var(--ink); }
 .sl-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; }
 @media (pointer: coarse) { .slider.more-end .js-track, .slider.more-start .js-track { mask-image: none; } }
 
+/* ---------- loader: the signal is found, then the name flies to its place ---------- */
+#ersal-loader { position: fixed; inset: 0; z-index: 200; display: none; pointer-events: none; animation: ld-failsafe 0s linear 4.5s forwards; }
+html.js.is-loading #ersal-loader { display: block; }
+@keyframes ld-failsafe { to { visibility: hidden; } }
+.ld-bg { position: absolute; inset: 0; background: var(--ground); transition: opacity .42s var(--ease-out) .1s; }
+.ld-stage { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 20px; }
+.ld-mark { width: min(260px, 58vw); transform-origin: 0 0; }
+.ld-mark .ersal-mark { width: 100%; }
+.ld-mark .m-word, .ld-mark .m-latin { opacity: .14; transition: opacity .36s var(--ease-out); }
+.ld-mark .m-bar { animation: ld-search 1.15s var(--ease-in-out) infinite; }
+.ld-mark .m-bar-2 { animation-delay: .16s; }
+@keyframes ld-search { 0%, 100% { transform: scaleY(.06); } 40%, 60% { transform: scaleY(1); } }
+.ld-slogan { display: flex; align-items: center; gap: 12px; font-family: var(--f-display); font-weight: 600; font-size: .95rem; color: var(--muted); opacity: 0; transition: opacity .3s var(--ease-out); }
+.ld-slogan::before, .ld-slogan::after { content: ""; width: 24px; height: 1px; background: var(--red); }
+#ersal-loader.is-locked .m-bar { animation: ld-lock .38s var(--ease-out) forwards; }
+@keyframes ld-lock { from { transform: scaleY(var(--from, .06)); } to { transform: scaleY(1); } }
+#ersal-loader.is-locked .m-word, #ersal-loader.is-locked .m-latin, #ersal-loader.is-locked .ld-slogan { opacity: 1; }
+#ersal-loader.is-leaving .ld-slogan { opacity: 0; transition-duration: .15s; }
+#ersal-loader.is-leaving .ld-bg { opacity: 0; }
+/* the header mark waits under the loader; brand-book moments start only once it is gone */
+html.is-loading .mast .brand .ersal-mark, html.is-loading .bk-bar .mini .ersal-mark { visibility: hidden; animation: ld-show 0s linear 4.5s forwards; }
+@keyframes ld-show { to { visibility: visible; } }
+html.is-loading .guides .draw, html.is-loading .guides .fade, html.is-loading .js-acquire .m-bar { animation-play-state: paused; }
+
+/* ---------- arrival: a new transmission drops in and is revealed top to bottom ---------- */
+@keyframes arrive { from { opacity: 0; transform: translateY(-14px); clip-path: inset(0 0 100% 0); } to { opacity: 1; transform: none; clip-path: inset(0); } }
+.arrive-wait { opacity: 0; animation: arrive-failsafe 0s linear 4.6s forwards; }
+@keyframes arrive-failsafe { to { opacity: 1; } }
+.arrive { animation: arrive .7s var(--ease-out) var(--d, 0ms) both; }
+@keyframes ersal-fade { from { opacity: 0; } }
+
+/* ---------- night broadcast crossfade ---------- */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .24s; animation-timing-function: ease; }
+
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
   .carrier.drift svg { animation: none; }
 }
