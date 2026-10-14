@@ -300,56 +300,157 @@
     btn.addEventListener('click', () => playing ? stop() : play());
   }
 
-  /* ---------- wide coverage: villages around Al-Irsal Street ---------- */
-  const radar = $('.js-radar');
-  if (radar && D) {
-    const card = $('.js-radar-card');
-    const S = 560, C = S / 2, R = C - 30, KM = 20;
-    const rOf = km => R * Math.sqrt(Math.min(km, KM) / KM); // square-root scale: the dense ring around Ramallah gets room
+  /* ---------- wide coverage: a spike map of Ramallah and al-Bireh on an OSM base ---------- */
+  const cov = $('.js-cov');
+  if (cov && D && D.map) {
+    const M = D.map, tip = $('.js-cov-tip'), listEl = $('.js-cov-list');
+    const NB_AT = { 'محافظة نابلس': [.66, .05], 'محافظة سلفيت': [.2, .1], 'محافظة أريحا والأغوار': [.88, .6], 'محافظة القدس': [.3, .9] };
+    M.neighbours.forEach(n => { const at = NB_AT[n.name]; if (at) { n.x = M.w * at[0]; n.y = M.h * at[1]; } });
     const NOW = new Date(D.now + ':00+03:00');
-    const fresh = p => { const dt = new Date(`2026-10-${p.last.day}T${p.last.time}:00+03:00`); return (NOW - dt) / 36e5 <= 6; };
+    const byName = new Map(D.places.map(p => [p.name, p]));
+    const xy = new Map(M.places.map(p => [p.name, p]));
+    const fresh = p => (NOW - new Date(`2026-10-${p.last.day}T${p.last.time}:00+03:00`)) / 36e5 <= 6;
     const when = p => (p.last.day === 14 ? '' : p.last.day === 13 ? 'أمس ' : 'الإثنين ') + p.last.time;
-    let s = `<svg viewBox="0 0 ${S} ${S}" style="direction:ltr" focusable="false">`;
-    s += `<line class="axis" x1="${C}" x2="${C}" y1="${C - R}" y2="${C + R}"/><line class="axis" x1="${C - R}" x2="${C + R}" y1="${C}" y2="${C}"/>`;
-    [2, 5, 10, 20].forEach(km => { s += `<circle class="ring" cx="${C}" cy="${C}" r="${rOf(km).toFixed(1)}"/><text class="ring-label" direction="rtl" x="${C - 5}" y="${(C + rOf(km) - 5).toFixed(1)}">${km} كم</text>`; });
-    if (!reduce) s += `<circle class="wave" cx="${C}" cy="${C}" r="${R}"/><circle class="wave" cx="${C}" cy="${C}" r="${R}"/><circle class="wave" cx="${C}" cy="${C}" r="${R}"/>`;
-    s += `<g class="north"><text x="${C}" y="${C - R - 10}" text-anchor="middle">شمال</text></g>`;
-    const boxes = [{ x1: C - 6, x2: C + 92, y1: C - 10, y2: C + 28 }];
-    const hit = (b) => boxes.some(o => !(b.x2 < o.x1 || b.x1 > o.x2 || b.y2 < o.y1 || b.y1 > o.y2));
-    const placed = D.places.slice().sort((a, b) => b.n - a.n);
-    let blips = '';
-    placed.forEach((p, idx) => {
-      const th = p.deg * Math.PI / 180, x = C + Math.sin(th) * rOf(p.km), y = C - Math.cos(th) * rOf(p.km);
-      const h = 9 + Math.sqrt(p.n) * 7, w = 5, o = h * CUT;
-      let label = '';
-      if (p.n >= 2 || idx < 14) {
-        const tw = p.name.length * 6.6 + 6, right = x < C + R * .45;
-        let b = right ? { x1: x + w + o + 4, x2: x + w + o + 4 + tw, y1: y - 16, y2: y - 2 } : { x1: x - 6 - tw, x2: x - 6, y1: y - 16, y2: y - 2 };
-        if (hit(b)) { b = right ? { x1: x - 6 - tw, x2: x - 6, y1: y - 16, y2: y - 2 } : { x1: x + w + o + 4, x2: x + w + o + 4 + tw, y1: y - 16, y2: y - 2 }; }
-        if (!hit(b)) { boxes.push(b); label = `<text x="${b.x1.toFixed(1)}" y="${(y - 5).toFixed(1)}">${p.name}</text>`; }
-      }
-      blips += `<g class="blip${fresh(p) ? ' fresh' : ''}" tabindex="0" role="button" data-i="${D.places.indexOf(p)}" aria-label="${p.name}: ${plural(p.n)}، آخرها ${when(p)}"><path d="M${(x - w / 2).toFixed(1)} ${y.toFixed(1)}L${(x + w / 2).toFixed(1)} ${y.toFixed(1)}L${(x + w / 2 + o).toFixed(1)} ${(y - h).toFixed(1)}L${(x - w / 2 + o).toFixed(1)} ${(y - h).toFixed(1)}Z"/>${label}</g>`;
-    });
-    s += blips;
-    s += `<g class="center"><path d="M${C - 4} ${C + 6}L${C + 3} ${C + 6}L${C + 6} ${C - 8}L${C - 1} ${C - 8}Z"/><text x="${C + 10}" y="${C + 22}">شارع الإرسال</text></g>`;
-    s += '</svg>';
-    radar.innerHTML = s;
-    const idle = () => {
-      const top = placed.slice(0, 3).map(p => `${p.name} (${p.n})`).join('، ');
-      card.innerHTML = `<b>${D.places.length} قرية وبلدة ومدينة</b><div class="meta">الأكثر ذكرا: ${top}</div>`;
-    };
-    const show = g => {
-      const p = D.places[+g.dataset.i];
-      $$('.blip', radar).forEach(b => b.classList.toggle('on', b === g));
-      card.innerHTML = `<b>${p.name}</b> · ${plural(p.n)}<div class="meta"><span class="sig" data-l="${fresh(p) ? 1 : 3}" aria-hidden="true"><i></i><i></i><i></i></span><time>${when(p)}</time><span class="place">آخر إشارة</span></div><div>${p.last.title}</div>`;
-    };
-    $$('.blip', radar).forEach(g => {
-      g.addEventListener('pointerenter', () => show(g));
-      g.addEventListener('focus', () => show(g));
-      g.addEventListener('click', () => show(g));
-      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(g); } });
-    });
-    radar.addEventListener('pointerleave', () => { $$('.blip', radar).forEach(b => b.classList.remove('on')); idle(); });
-    idle();
+    const max = Math.max(...D.places.map(p => p.n));
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    function draw() {
+      const k = M.w / Math.max(cov.clientWidth, 1); // viewBox units per CSS pixel
+      const fs = 12.5 * k, small = 10.5 * k, sw = 5.5 * k;
+      let s = `<svg viewBox="0 0 ${M.w} ${M.h}" style="direction:ltr" focusable="false">`;
+      M.neighbours.forEach(n => { s += `<path class="nb" d="${n.d}"/>`; });
+      s += `<path class="gov" d="${M.gov}"/><path class="rd2" d="${M.roads.secondary}"/><path class="rd1" d="${M.roads.primary}"/>`;
+      M.neighbours.forEach(n => { s += `<text class="nb-l" x="${n.x}" y="${n.y}" text-anchor="middle" font-size="${small}">${n.name}</text>`; });
+      const [cx, cy] = M.center;
+      [5, 10, 20].forEach(km => {
+        const r = km * M.kmpx, ly = cy + r * .7071 + 12 * k;
+        s += `<circle class="ring" cx="${cx}" cy="${cy}" r="${r}"/>`;
+        if (ly < M.h - 44 * k && cx - r * .7071 > 60 * k) s += `<text class="ring-l" direction="rtl" x="${cx - r * .7071 - 3 * k}" y="${cy + r * .7071 + 12 * k}" font-size="${small}">${km} كم</text>`;
+      });
+      if (!reduce) s += `<circle class="wave" cx="${cx}" cy="${cy}" r="${20 * M.kmpx}"/><circle class="wave w2" cx="${cx}" cy="${cy}" r="${20 * M.kmpx}"/>`;
+      // labels: largest first, keep only what fits
+      const boxes = [{ x1: cx - 6 * k, x2: cx + 96 * k, y1: cy - 8 * k, y2: cy + 24 * k }];
+      const hit = b => b.x1 < 0 || b.x2 > M.w || b.y1 < 0 || boxes.some(o => !(b.x2 < o.x1 || b.x1 > o.x2 || b.y2 < o.y1 || b.y1 > o.y2));
+      const order = D.places.slice().sort((a, b) => b.n - a.n);
+      const hOf = p => (14 + Math.sqrt(p.n) * 15) * k * .62;
+      // labels may cross other thin spikes (they carry a halo) but never another label, the station or a governorate name
+      M.neighbours.forEach(n => { const w = n.name.length * 5.6 * k; boxes.push({ x1: n.x - w / 2, x2: n.x + w / 2, y1: n.y - 12 * k, y2: n.y + 3 * k }); });
+      const spikes = []; // placed largest-first, painted smallest-first so big labels stay on top
+      order.forEach(p => {
+        const q = xy.get(p.name); if (!q) return;
+        const h = hOf(p), o = h * CUT;
+        const top = q.y - h;
+        let lab = '';
+        const narrow = cov.clientWidth < 520;
+        if (narrow ? order.indexOf(p) < 8 : p.n >= 2) {
+          const tw = (p.name.length * 6.6 + 4) * k, th = 15 * k; // names only: counts live in the list and the tooltip
+          const cands = [
+            { x1: q.x + o + 5 * k, y1: top - 2 * k, a: 'start' },
+            { x1: q.x - 6 * k - tw, y1: top - 2 * k, a: 'end' },
+            { x1: q.x + 7 * k, y1: q.y - th * .5, a: 'start' },
+            { x1: q.x - 7 * k - tw, y1: q.y - th * .5, a: 'end' },
+            { x1: q.x + o + 5 * k, y1: top - th - 2 * k, a: 'start' },
+            { x1: q.x - 6 * k - tw, y1: top - th - 2 * k, a: 'end' },
+            { x1: q.x + 7 * k, y1: q.y + 2 * k, a: 'start' },
+            { x1: q.x - 7 * k - tw, y1: q.y + 2 * k, a: 'end' }
+          ];
+          for (const c of cands) {
+            const b = { x1: c.x1, x2: c.x1 + tw, y1: c.y1, y2: c.y1 + th };
+            if (!hit(b)) {
+              boxes.push(b);
+              const tx = c.a === 'start' ? b.x1 : b.x2;
+              lab = `<text class="lbl" x="${tx.toFixed(1)}" y="${(b.y2 - 3 * k).toFixed(1)}" font-size="${fs}"${c.a === 'end' ? ' text-anchor="end"' : ''}>${p.name}</text>`;
+              break;
+            }
+          }
+        }
+        const f = fresh(p) ? ' fresh' : '';
+        spikes.push(`<g class="pt${f}" tabindex="0" role="button" data-n="${esc(p.name)}" aria-label="${esc(p.name)}: ${plural(p.n)}، آخرها ${when(p)}">`
+          + `<path class="spike" d="M${(q.x - sw / 2).toFixed(1)} ${q.y}L${(q.x + sw / 2).toFixed(1)} ${q.y}L${(q.x + sw / 2 + o).toFixed(1)} ${top.toFixed(1)}L${(q.x - sw / 2 + o).toFixed(1)} ${top.toFixed(1)}Z"/>`
+          + `<circle class="base" cx="${q.x}" cy="${q.y}" r="${2.6 * k}"/>${lab}</g>`);
+      });
+      s += spikes.reverse().join('');
+      s += `<g class="stn"><circle cx="${cx}" cy="${cy}" r="${5 * k}"/><path d="M${cx - 2 * k} ${cy}L${cx + 2 * k} ${cy}L${cx + 2 * k + 16 * k * CUT} ${cy - 16 * k}L${cx - 2 * k + 16 * k * CUT} ${cy - 16 * k}Z"/><text x="${cx + 9 * k}" y="${cy + 18 * k}" font-size="${fs}">شارع الإرسال</text></g>`;
+      // north arrow + scale bar + attribution, cartographic furniture
+      const pad = 18 * k;
+      s += `<g class="north"><path d="M${M.w - pad - 6 * k} ${pad + 34 * k}L${M.w - pad} ${pad + 34 * k}L${M.w - pad + 26 * k * CUT} ${pad + 8 * k}L${M.w - pad - 6 * k + 26 * k * CUT} ${pad + 8 * k}Z"/><text x="${M.w - pad + 2 * k}" y="${pad}" text-anchor="middle" font-size="${small}">شمال</text></g>`;
+      const sb = 5 * M.kmpx, sx = pad, sy = M.h - pad - 10 * k;
+      s += `<g class="scalebar"><line x1="${sx}" x2="${sx + sb}" y1="${sy}" y2="${sy}"/><line x1="${sx}" x2="${sx}" y1="${sy - 5 * k}" y2="${sy}"/><line x1="${sx + sb}" x2="${sx + sb}" y1="${sy - 5 * k}" y2="${sy}"/><line x1="${sx + sb / 2}" x2="${sx + sb / 2}" y1="${sy - 3 * k}" y2="${sy}"/><text direction="rtl" x="${sx + sb}" y="${sy + 14 * k}" font-size="${small}" text-anchor="start">5 كم</text></g>`;
+      s += `<text class="attr" x="${M.w - pad}" y="${M.h - pad + 4 * k}" text-anchor="end" font-size="${9.5 * k}">© OpenStreetMap contributors</text>`;
+      s += '</svg>';
+      cov.innerHTML = s;
+      $$('.pt', cov).forEach(g => {
+        g.addEventListener('pointerenter', () => show(g.dataset.n));
+        g.addEventListener('focus', () => show(g.dataset.n));
+        g.addEventListener('click', () => show(g.dataset.n));
+        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(g.dataset.n); } });
+      });
+    }
+    function show(name) {
+      const p = byName.get(name), q = xy.get(name); if (!p || !q) return;
+      $$('.pt', cov).forEach(g => g.classList.toggle('on', g.dataset.n === name));
+      $$('.cov-row', listEl).forEach(r => r.classList.toggle('on', r.dataset.n === name));
+      tip.innerHTML = `<b>${esc(p.name)}</b><div class="meta">${plural(p.n)} · آخر إشارة <time>${when(p)}</time></div>${esc(p.last.title)}`;
+      tip.hidden = false;
+      const W = cov.clientWidth, sc = W / M.w, px = q.x * sc, py = q.y * sc;
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      tip.style.left = Math.max(0, Math.min(W - tw, px - tw / 2)) + 'px';
+      tip.style.top = (py - th - 18 > 0 ? py - th - 18 : py + 16) + 'px';
+    }
+    const hide = () => { tip.hidden = true; $$('.pt', cov).forEach(g => g.classList.remove('on')); $$('.cov-row', listEl).forEach(r => r.classList.remove('on')); };
+    cov.addEventListener('pointerleave', hide);
+    // ranked list: the eight places heard most
+    listEl.innerHTML = D.places.slice().sort((a, b) => b.n - a.n).slice(0, 8).map(p =>
+      `<li class="cov-row${fresh(p) ? ' fresh' : ''}" data-n="${esc(p.name)}"><span class="n">${esc(p.name)}<small>آخر إشارة ${when(p)}</small></span><span class="c">${p.n}</span><span class="m" aria-hidden="true"><i style="--v:${(p.n / max * 100).toFixed(1)}%"></i></span></li>`).join('');
+    $$('.cov-row', listEl).forEach(r => { r.addEventListener('pointerenter', () => show(r.dataset.n)); r.addEventListener('pointerleave', hide); });
+    draw();
+    addEventListener('resize', debounce(draw, 150));
+    document.addEventListener('ersal:theme', draw);
   }
+
+  /* ---------- sliders: arrows, drag, and a tuning-scale progress line ---------- */
+  $$('.js-slider').forEach(sl => {
+    const track = $('.js-track', sl), bar = $('.sl-progress i', sl);
+    const host = sl.closest('section') || document;
+    const prev = $('.js-prev', host), next = $('.js-next', host);
+    const rtl = getComputedStyle(track).direction === 'rtl';
+    const step = () => Math.max(track.clientWidth * .85, 160);
+    const go = dir => track.scrollBy({ left: (rtl ? -1 : 1) * dir * step(), behavior: reduce ? 'auto' : 'smooth' });
+    if (prev) prev.addEventListener('click', () => go(-1));
+    if (next) next.addEventListener('click', () => go(1));
+    function sync() {
+      const room = track.scrollWidth - track.clientWidth;
+      const x = Math.abs(track.scrollLeft);
+      const fits = room <= 2;
+      sl.classList.toggle('fits', fits);
+      sl.classList.toggle('more-start', x > 2);
+      sl.classList.toggle('more-end', !fits && x < room - 2);
+      if (bar) { const w = fits ? 100 : track.clientWidth / track.scrollWidth * 100; bar.style.setProperty('--w', w.toFixed(2) + '%'); bar.style.setProperty('--x', (fits ? 0 : x / room * (100 - w)).toFixed(2) + '%'); }
+      if (prev) prev.disabled = x <= 2;
+      if (next) next.disabled = fits || x >= room - 2;
+    }
+    track.addEventListener('scroll', sync, { passive: true });
+    addEventListener('resize', debounce(sync));
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(sync);
+    addEventListener('load', sync);
+    sync();
+    // mouse drag; touch keeps native swipe
+    if (matchMedia('(pointer: fine)').matches) {
+      sl.classList.add('can-drag');
+      let x0 = 0, s0 = 0, moved = false, down = false, swallow = false;
+      track.addEventListener('click', ev => { if (swallow) { ev.preventDefault(); ev.stopPropagation(); } }, true);
+      track.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || e.button !== 0) return; down = true; moved = false; x0 = e.clientX; s0 = track.scrollLeft; });
+      addEventListener('pointermove', e => {
+        if (!down) return;
+        const dx = e.clientX - x0;
+        if (!moved && Math.abs(dx) > 6) { moved = true; sl.classList.add('dragging'); }
+        if (moved) track.scrollLeft = s0 - dx;
+      });
+      addEventListener('pointerup', () => {
+        if (!down) return; down = false;
+        if (moved) { sl.classList.remove('dragging'); swallow = true; setTimeout(() => { swallow = false; }, 0); }
+      });
+      track.addEventListener('dragstart', e => e.preventDefault());
+    }
+  });
 })();

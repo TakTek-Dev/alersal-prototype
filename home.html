@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Changa:wght@400..800&family=Readex+Pro:wght@300..700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/ersal.css?v=5">
-<link rel="stylesheet" href="assets/css/home.css?v=8">
+<link rel="stylesheet" href="assets/css/ersal.css?v=7">
+<link rel="stylesheet" href="assets/css/home.css?v=12">
 <script>try{var q=(location.search.match(/theme=(light|dark)/)||[])[1],t=q||localStorage.getItem('ersal:theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
@@ -127,14 +127,17 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
   <section class="strip wrap" aria-labelledby="strip-h">
     <div class="station"><h2 id="strip-h">بالصور</h2><span class="scale" aria-hidden="true"></span><span class="note">من آخر 24 ساعة</span></div>
-    <ol class="strip-list">
+    <div class="slider js-slider">
+      <ol class="strip-list js-track">
       <!--@second-->
 <li class="frame" data-l="3"><a href="https://t.me/alersalps/129966"><span class="frame-t"><time datetime="2026-10-14T09:06">09:06</time><span class="sig" data-l="3" role="img" aria-label="قوة الإشارة 3 من 3"><i></i><i></i><i></i></span><span class="frame-day">اليوم · كفر الديك</span></span><h3><span class="pfx src">مصادر محلية<span class="sr">:</span></span>قوات الاحتلال تمنع أهالي بلدة كفر الديك قضاء سلفيت من الوصول لأراضيهم لقطف الزيتون</h3><span class="ph"><img src="assets/img/tg/129966.jpg" alt="" loading="lazy"></span></a></li>
 <li class="frame" data-l="3"><a href="https://t.me/alersalps/129940"><span class="frame-t"><time datetime="2026-10-13T19:54">19:54</time><span class="sig" data-l="3" role="img" aria-label="قوة الإشارة 3 من 3"><i></i><i></i><i></i></span><span class="frame-day">أمس</span></span><h3><span class="pfx src">مصادر صحفية<span class="sr">:</span></span>قوات الاحتلال تفرج عن شاب، لا يعرف أهله أو وجهته وسط مناشدات للتعرف عليه والمساعدة في العثور على ذويه</h3><span class="ph"><img src="assets/img/tg/129940.jpg" alt="" loading="lazy"></span></a></li>
 <li class="frame" data-l="3"><a href="https://t.me/alersalps/129933"><span class="frame-t"><time datetime="2026-10-13T18:31">18:31</time><span class="sig" data-l="3" role="img" aria-label="قوة الإشارة 3 من 3"><i></i><i></i><i></i></span><span class="frame-day">أمس · المهلل</span></span><h3>أزمة خانقة وتكدس لعدد من المركبات على حاجز المهلل غرب رام الله؛ جراء تشديدات قوات الاحتلال على الحاجز</h3><span class="ph"><img src="assets/img/tg/129933.jpg" alt="" loading="lazy"></span></a></li>
 <li class="frame" data-l="3"><a href="https://t.me/alersalps/129906"><span class="frame-t"><time datetime="2026-10-13T16:00">16:00</time><span class="sig" data-l="3" role="img" aria-label="قوة الإشارة 3 من 3"><i></i><i></i><i></i></span><span class="frame-day">أمس · المغير</span></span><h3><span class="pfx src">مصادر محلية<span class="sr">:</span></span>قوات الاحتلال تعتقل طالب الثانوية العامة عبد الكريم فائق أبو نعيم من قرية المغير شمال شرق رام الله بعد الاعتداء عليه بالضرب أثناء عودته من المدرسة</h3><span class="ph"><img src="assets/img/tg/129906.jpg" alt="" loading="lazy"></span></a></li>
 <!--/@second-->
-    </ol>
+      </ol>
+      <div class="sl-progress" aria-hidden="true"><i></i></div>
+    </div>
   </section>
 
   <section class="pulse" aria-labelledby="pulse-h">
@@ -254,10 +257,14 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
       </div>
     </div>
     <div class="radar-box">
-      <div class="station"><h2>تغطية واسعة</h2><span class="scale" aria-hidden="true"></span><span class="note">قرى ذكرناها في يومين</span></div>
-      <div class="radar js-radar" role="group" aria-label="خريطة دائرية للقرى والبلدات التي ذكرتها الأخبار، مركزها شارع الإرسال في رام الله"></div>
-      <div class="radar-card js-radar-card" aria-live="polite"></div>
-      <p class="radar-note">المركز شارع الإرسال في رام الله، والدوائر على 2 و5 و10 و20 كم. طول العمود بعدد الأخبار، والأحمر لقرية وصلت منها إشارة خلال آخر 6 ساعات.</p>
+      <div class="station"><h2>تغطية واسعة</h2><span class="scale" aria-hidden="true"></span><span class="note">محافظة رام الله والبيرة</span></div>
+      <figure class="cov">
+        <div class="cov-map js-cov" role="group" aria-label="خريطة محافظة رام الله والبيرة وما حولها، على كل قرية أو بلدة ذكرتها الأخبار عمود يطول بعدد الأخبار"></div>
+        <div class="cov-tip js-cov-tip" role="status" aria-live="polite" hidden></div>
+        <figcaption class="cov-legend"><span class="lg-spike" aria-hidden="true"></span>طول العمود بعدد الأخبار<span class="lg-spike fresh" aria-hidden="true"></span>إشارة خلال آخر 6 ساعات<span class="lg-ring" aria-hidden="true"></span>دوائر المدى من شارع الإرسال</figcaption>
+      </figure>
+      <h3 class="cov-list-h">الأكثر ذكرا في يومين</h3>
+      <ol class="cov-list js-cov-list"></ol>
     </div>
   </section>
 
@@ -268,7 +275,8 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 5 أسرى خلال يومين
 <!--/@freed-count--></span></div>
       <div class="freed-grid">
-        <ul class="freed-list">
+        <div class="slider js-slider">
+          <ul class="freed-list js-track">
           <!--@freed-->
 <li class="freed out"><a href="https://t.me/alersalps/129964"><span class="ph"><img src="assets/img/tg/129964.jpg" alt="" loading="lazy"></span><span class="freed-h">بعد الاعتقال الإداري لعامين.. قوات الاحتلال تفرج عن الأسير هيثم أبو نعيم من قرية المغير رام الله</span><span class="meta"><time datetime="2026-10-14T08:19">08:19</time></span></a></li>
 <li class="freed out"><a href="https://t.me/alersalps/129950"><span class="ph"><img src="assets/img/tg/129950.jpg" alt="" loading="lazy"></span><span class="freed-h">الأسير ذو الإعاقة السمعية محمد أسامة مطر من قرية بلعين، غرب رام الله يعانق الحرية بعد عامين من الاعتقال الإداري في سجون الاحتلال</span><span class="meta"><time datetime="2026-10-13T21:19">أمس 21:19</time></span></a></li>
@@ -276,7 +284,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <li class="freed out"><a href="https://t.me/alersalps/129941"><span class="ph"><img src="assets/img/tg/v129941.jpg" alt="" loading="lazy"><span class=play aria-hidden=true><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></span></span><span class="freed-h">الأسير حازم جودة من قرية عراق التايه شرق نابلس يعانق الحرية بعد 3 سنوات من الاعتقال في سجون الاحتلال</span><span class="meta"><time datetime="2026-10-13T20:01">أمس 20:01</time></span></a></li>
 <li class="freed out"><a href="https://t.me/alersalps/129849"><span class="ph"><img src="assets/img/tg/129849.jpg" alt="" loading="lazy"></span><span class="freed-h">الأسير مجاهد جواد أبو عليا يعانق الحرية بعد يومين من اعتقاله من أمام منزله في قرية المغير، شمال شرق رام الله</span><span class="meta"><time datetime="2026-10-12T21:53">الإثنين 21:53</time></span></a></li>
 <!--/@freed-->
-        </ul>
+          </ul>
+          <div class="sl-progress" aria-hidden="true"><i></i></div>
+        </div>
         <div class="courts">
           <h3>من محاكم الاحتلال</h3>
           <ul>
@@ -294,8 +304,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   </section>
 
   <section class="watch wrap" id="watch" aria-labelledby="watch-h">
-    <div class="station"><h2 id="watch-h">شاهد</h2><span class="scale" aria-hidden="true"></span><a class="more" href="https://www.tiktok.com/@alersal.ps6">كل المقاطع<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a></div>
-    <ul class="reels">
+    <div class="station"><h2 id="watch-h">شاهد</h2><span class="scale" aria-hidden="true"></span><a class="more" href="https://www.tiktok.com/@alersal.ps6">كل المقاطع<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></a><div class="sl-ctrl"><button class="sl-btn js-prev" type="button" aria-label="المقاطع السابقة" aria-controls="reels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button><button class="sl-btn js-next" type="button" aria-label="المقاطع التالية" aria-controls="reels"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></button></div></div>
+    <div class="slider js-slider">
+      <ul class="reels js-track" id="reels">
       <!--@watch-->
 <li class="reel"><a href="https://t.me/alersalps/129913"><span class="ph"><img src="assets/img/tg/v129913.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></span></span><span class="reel-h">رسالة أهالي بلدة ترمسعيا شمال رام الله، عقب منع الاحتلال لهم من الوصول إلى أراضيهم لقطف ثمار الزيتون</span><span class="meta"><time datetime="2026-10-13T16:46">أمس 16:46</time><span class=place>ترمسعيا</span></span></a></li>
 <li class="reel"><a href="https://t.me/alersalps/129919"><span class="ph"><img src="assets/img/tg/v129919.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></span></span><span class="reel-h">كلمات سيدة عقب منع المزارعين وطردهم أثناء محاولتهم قطف ثمار الزيتون في بلدة ترمسعيا، شمال رام الله</span><span class="meta"><time datetime="2026-10-13T17:35">أمس 17:35</time><span class=place>ترمسعيا</span></span></a></li>
@@ -306,7 +317,9 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <li class="reel"><a href="https://t.me/alersalps/129937"><span class="ph"><img src="assets/img/tg/v129937.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></span></span><span class="reel-h">جانب من اقتحام قوات الاحتلال الحي الشرقي في مدينة جنين</span><span class="meta"><time datetime="2026-10-13T19:13">أمس 19:13</time><span class=place>جنين</span></span></a></li>
 <li class="reel"><a href="https://t.me/alersalps/129949"><span class="ph"><img src="assets/img/tg/v129949.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg></span></span><span class="reel-h">جانب من اقتحام قوات الاحتلال بلدة كوبر، شمال رام الله</span><span class="meta"><time datetime="2026-10-13T21:11">أمس 21:11</time><span class=place>كوبر</span></span></a></li>
 <!--/@watch-->
-    </ul>
+      </ul>
+      <div class="sl-progress" aria-hidden="true"><i></i></div>
+    </div>
   </section>
 
   <section class="beats wrap" aria-label="الأرض والقدس">
@@ -389,7 +402,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   </div>
 </footer>
 
-<script src="assets/js/edition.js?v=2"></script>
-<script src="assets/js/ersal.js?v=7"></script>
+<script src="assets/js/edition.js?v=3"></script>
+<script src="assets/js/ersal.js?v=13"></script>
 </body>
 </html>
