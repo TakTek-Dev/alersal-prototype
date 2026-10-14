@@ -273,7 +273,6 @@
 .bk-end { padding-block: var(--s8); }
 .bk-end .wrap { display: flex; align-items: center; justify-content: space-between; gap: var(--s5); flex-wrap: wrap; }
 .bk-end h2 { font-size: var(--fs-h2); font-weight: 800; }
-.bk-pages { display: flex; flex-wrap: wrap; gap: 10px; }
 
 @media (max-width: 1100px) {
   .bk-toc { display: none; }

@@ -202,8 +202,7 @@
         let cleared = false;
         const clear = () => { if (!cleared) { cleared = true; needle.style.transition = ''; } };
         needle.addEventListener('transitionend', clear, { once: true });
-        // a throttled or hidden tab may never run the sweep: land the needle anyway
-        setTimeout(() => { if (cleared) return; cleared = true; needle.style.transition = 'none'; place(tunedTo); void needle.offsetWidth; needle.style.transition = ''; }, 1100);
+        setTimeout(clear, 1000);
       });
     } else {
       fontsSettled.then(() => tuner.classList.add('is-ready'));
@@ -273,12 +272,10 @@
     let bars = [];
     function draw() {
       const W = spec.clientWidth, H = spec.clientHeight;
-      const raidSeries = spec.dataset.series === 'raid' && D.raidPulse;
-      const span0 = raidSeries ? 5 : 30;
-      let data = (raidSeries ? D.raidPulse : D.spectrum).map(d => ({ ...d, span: span0 }));
+      let data = D.spectrum.map(d => ({ ...d, span: 30 }));
       if (W < 640) {
         const agg = [];
-        for (let i = 0; i < data.length; i += 2) agg.push({ t: data[i].t, n: data[i].n + (data[i + 1] ? data[i + 1].n : 0), span: span0 * 2 });
+        for (let i = 0; i < data.length; i += 2) agg.push({ t: data[i].t, n: data[i].n + (data[i + 1] ? data[i + 1].n : 0), span: 60 });
         data = agg;
       }
       const n = data.length, max = Math.max(...data.map(d => d.n));
@@ -291,14 +288,14 @@
       let burstMin = 1e9, burstMax = -1, burstTop = base;
       data.forEach((d, k) => {
         const x = xOf(k), h = d.n ? Math.max(3, d.n / max * plotH) : 2, o = h * CUT;
-        const burst = !raidSeries && d.t >= '2026-10-13T10:00' && d.t < '2026-10-13T14:30';
+        const burst = d.t >= '2026-10-13T10:00' && d.t < '2026-10-13T14:30';
         if (burst) { burstMin = Math.min(burstMin, x); burstMax = Math.max(burstMax, x + bw + o); burstTop = Math.min(burstTop, base - h); }
         const cls = 'bar' + (d.n === 0 ? ' zero' : '') + (burst ? ' burst' : '');
         g += `<path class="${cls}" style="--d:${Math.round(k / Math.max(1, n - 1) * 600)}ms" d="M${x.toFixed(1)} ${base}L${(x + bw).toFixed(1)} ${base}L${(x + bw + o).toFixed(1)} ${(base - h).toFixed(1)}L${(x + o).toFixed(1)} ${(base - h).toFixed(1)}Z"/>`;
         bars.push({ x, x2: x + bw + o, d });
         const hh = d.t.slice(11, 16), dd = +d.t.slice(8, 10);
         if (hh === '00:00') g += `<g class="day"><line x1="${(x + bw + step * .2).toFixed(1)}" x2="${(x + bw + step * .2).toFixed(1)}" y1="${top - 26}" y2="${base}" stroke-dasharray="2 3"/><text x="${(x + bw - 4).toFixed(1)}" y="${top - 14}" text-anchor="end">${DAYS[dd]}</text></g>`;
-        else if (raidSeries ? (/:00$/.test(hh) || (W >= 640 && /:30$/.test(hh))) : (/^(03|06|09|12|15|18|21):00$/.test(hh) && (W >= 640 || /^(06|12|18):00$/.test(hh)))) g += `<g class="axis"><line x1="${(x + bw / 2).toFixed(1)}" x2="${(x + bw / 2).toFixed(1)}" y1="${base}" y2="${base + 5}"/><text x="${(x + bw / 2).toFixed(1)}" y="${base + 19}" text-anchor="middle">${hh}</text></g>`;
+        else if (/^(03|06|09|12|15|18|21):00$/.test(hh) && (W >= 640 || /^(06|12|18):00$/.test(hh))) g += `<g class="axis"><line x1="${(x + bw / 2).toFixed(1)}" x2="${(x + bw / 2).toFixed(1)}" y1="${base}" y2="${base + 5}"/><text x="${(x + bw / 2).toFixed(1)}" y="${base + 19}" text-anchor="middle">${hh}</text></g>`;
         if (k === 0) g += `<g class="day"><text x="${(W - 2).toFixed(1)}" y="${top - 14}" text-anchor="end">${DAYS[dd]}</text></g>`;
       });
       if (burstMax > 0) {
@@ -325,8 +322,7 @@
     });
     spec.addEventListener('pointerleave', () => { tip.classList.remove('on'); $$('.bar', spec).forEach(pth => pth.classList.remove('hot')); });
     let pulseSeen = true;
-    const pulseKey = 'ersal:pulse:' + (spec.dataset.series || 'day');
-    try { pulseSeen = !!sessionStorage.getItem(pulseKey); } catch (e) {}
+    try { pulseSeen = !!sessionStorage.getItem('ersal:pulse'); } catch (e) {}
     if (!reduce && !pulseSeen && 'IntersectionObserver' in window) spec.classList.add('pre');
     draw();
     if (spec.classList.contains('pre')) whenReady(() => {
@@ -334,12 +330,10 @@
         if (!es.some(en => en.isIntersecting)) return;
         io.disconnect();
         spec.classList.replace('pre', 'acquire');
-        try { sessionStorage.setItem(pulseKey, '1'); } catch (e) {}
+        try { sessionStorage.setItem('ersal:pulse', '1'); } catch (e) {}
         setTimeout(() => spec.classList.remove('acquire'), 1300);
       }, { threshold: .35 });
       io.observe(spec);
-      // no observer callbacks (hidden tab, headless capture): if the chart is on screen, show it still
-      setTimeout(() => { const r = spec.getBoundingClientRect(); if (spec.classList.contains('pre') && r.top < innerHeight && r.bottom > 0) { io.disconnect(); spec.classList.remove('pre'); } }, 1500);
     });
     addEventListener('resize', debounce(draw));
   }
@@ -415,17 +409,6 @@
     btn.addEventListener('click', () => playing ? stop() : play());
   }
 
-  /* ---------- shared map layers: governorates, roads, and the cartographic furniture ---------- */
-  const mapBase = (M, k, small) => M.neighbours.map(n => `<path class="nb" d="${n.d}"/>`).join('')
-    + `<path class="gov" d="${M.gov}"/><path class="rd2" d="${M.roads.secondary}"/><path class="rd1" d="${M.roads.primary}"/>`
-    + M.neighbours.map(n => `<text class="nb-l" x="${n.x}" y="${n.y}" text-anchor="middle" font-size="${small}">${n.name}</text>`).join('');
-  const mapFurniture = (M, k, small) => {
-    const pad = 18 * k, sb = 5 * M.kmpx, sx = pad, sy = M.h - pad - 10 * k;
-    return `<g class="north"><path d="M${M.w - pad - 6 * k} ${pad + 34 * k}L${M.w - pad} ${pad + 34 * k}L${M.w - pad + 26 * k * CUT} ${pad + 8 * k}L${M.w - pad - 6 * k + 26 * k * CUT} ${pad + 8 * k}Z"/><text x="${M.w - pad + 2 * k}" y="${pad}" text-anchor="middle" font-size="${small}">شمال</text></g>`
-      + `<g class="scalebar"><line x1="${sx}" x2="${sx + sb}" y1="${sy}" y2="${sy}"/><line x1="${sx}" x2="${sx}" y1="${sy - 5 * k}" y2="${sy}"/><line x1="${sx + sb}" x2="${sx + sb}" y1="${sy - 5 * k}" y2="${sy}"/><line x1="${sx + sb / 2}" x2="${sx + sb / 2}" y1="${sy - 3 * k}" y2="${sy}"/><text direction="rtl" x="${sx + sb}" y="${sy + 14 * k}" font-size="${small}" text-anchor="start">5 كم</text></g>`
-      + `<text class="attr" x="${M.w - pad}" y="${M.h - pad + 4 * k}" text-anchor="end" font-size="${9.5 * k}">© OpenStreetMap contributors</text>`;
-  };
-
   /* ---------- wide coverage: a spike map of Ramallah and al-Bireh on an OSM base ---------- */
   const cov = $('.js-cov');
   if (cov && D && D.map) {
@@ -444,7 +427,9 @@
       const k = M.w / Math.max(cov.clientWidth, 1); // viewBox units per CSS pixel
       const fs = 12.5 * k, small = 10.5 * k, sw = 5.5 * k;
       let s = `<svg viewBox="0 0 ${M.w} ${M.h}" style="direction:ltr" focusable="false">`;
-      s += mapBase(M, k, small);
+      M.neighbours.forEach(n => { s += `<path class="nb" d="${n.d}"/>`; });
+      s += `<path class="gov" d="${M.gov}"/><path class="rd2" d="${M.roads.secondary}"/><path class="rd1" d="${M.roads.primary}"/>`;
+      M.neighbours.forEach(n => { s += `<text class="nb-l" x="${n.x}" y="${n.y}" text-anchor="middle" font-size="${small}">${n.name}</text>`; });
       const [cx, cy] = M.center;
       [5, 10, 20].forEach(km => {
         const r = km * M.kmpx, ly = cy + r * .7071 + 12 * k;
@@ -494,7 +479,12 @@
       });
       s += spikes.reverse().join('');
       s += `<g class="stn"><circle cx="${cx}" cy="${cy}" r="${5 * k}"/><path d="M${cx - 2 * k} ${cy}L${cx + 2 * k} ${cy}L${cx + 2 * k + 16 * k * CUT} ${cy - 16 * k}L${cx - 2 * k + 16 * k * CUT} ${cy - 16 * k}Z"/><text x="${cx + 9 * k}" y="${cy + 18 * k}" font-size="${fs}">شارع الإرسال</text></g>`;
-      s += mapFurniture(M, k, small);
+      // north arrow + scale bar + attribution, cartographic furniture
+      const pad = 18 * k;
+      s += `<g class="north"><path d="M${M.w - pad - 6 * k} ${pad + 34 * k}L${M.w - pad} ${pad + 34 * k}L${M.w - pad + 26 * k * CUT} ${pad + 8 * k}L${M.w - pad - 6 * k + 26 * k * CUT} ${pad + 8 * k}Z"/><text x="${M.w - pad + 2 * k}" y="${pad}" text-anchor="middle" font-size="${small}">شمال</text></g>`;
+      const sb = 5 * M.kmpx, sx = pad, sy = M.h - pad - 10 * k;
+      s += `<g class="scalebar"><line x1="${sx}" x2="${sx + sb}" y1="${sy}" y2="${sy}"/><line x1="${sx}" x2="${sx}" y1="${sy - 5 * k}" y2="${sy}"/><line x1="${sx + sb}" x2="${sx + sb}" y1="${sy - 5 * k}" y2="${sy}"/><line x1="${sx + sb / 2}" x2="${sx + sb / 2}" y1="${sy - 3 * k}" y2="${sy}"/><text direction="rtl" x="${sx + sb}" y="${sy + 14 * k}" font-size="${small}" text-anchor="start">5 كم</text></g>`;
+      s += `<text class="attr" x="${M.w - pad}" y="${M.h - pad + 4 * k}" text-anchor="end" font-size="${9.5 * k}">© OpenStreetMap contributors</text>`;
       s += '</svg>';
       cov.innerHTML = s;
       if (!reduce) {
@@ -528,100 +518,6 @@
     draw();
     addEventListener('resize', debounce(draw, 150));
     document.addEventListener('ersal:theme', draw);
-  }
-
-  /* ---------- roads map: checkpoints on the governorate, coloured by what gets through ---------- */
-  const rmap = $('.js-roads-map');
-  if (rmap && D && D.map && D.checkpoints) {
-    const M = D.map;
-    const cls = s => s === 'مغلق' ? 'closed' : s === 'سالك' ? 'open' : 'mid';
-    function drawRoads() {
-      const k = M.w / Math.max(rmap.clientWidth, 1), fs = 12.5 * k, small = 10.5 * k;
-      let s = `<svg viewBox="0 0 ${M.w} ${M.h}" style="direction:ltr" focusable="false"><defs><linearGradient id="cp-handover"><stop offset="0" stop-color="var(--grad-a)"/><stop offset="1" stop-color="var(--grad-b)"/></linearGradient></defs>`;
-      s += mapBase(M, k, small);
-      const boxes = M.neighbours.map(n => { const w = n.name.length * 5.6 * k; return { x1: n.x - w / 2, x2: n.x + w / 2, y1: n.y - 12 * k, y2: n.y + 3 * k }; });
-      const hit = b => b.x1 < 0 || b.x2 > M.w || boxes.some(o => !(b.x2 < o.x1 || b.x1 > o.x2 || b.y2 < o.y1 || b.y1 > o.y2));
-      D.checkpoints.forEach(c => {
-        const h = 26 * k, w = 10 * k, o = h * CUT;
-        const tw = c.name.length * 6.4 * k, th = 15 * k;
-        let lab = '';
-        // every checkpoint gets a label (shown on hover / focus / row hover); only the closed ones stay visible, so only they avoid each other
-        for (const cand of [{ x1: c.x + o + 6 * k, a: 'start' }, { x1: c.x - 6 * k - tw, a: 'end' }, { x1: c.x + o + 6 * k, a: 'start', force: true }]) {
-          const b = { x1: cand.x1, x2: cand.x1 + tw, y1: c.y - h, y2: c.y - h + th };
-          if (cand.force || c.status !== 'مغلق' || !hit(b)) { if (c.status === 'مغلق') boxes.push(b); lab = `<text x="${(cand.a === 'start' ? b.x1 : b.x2).toFixed(1)}" y="${(b.y2 - 3 * k).toFixed(1)}" font-size="${fs}"${cand.a === 'end' ? ' text-anchor="end"' : ''}>${c.name}</text>`; break; }
-        }
-        s += `<g class="cp ${cls(c.status)}${c.age_h > 24 ? ' stale' : ''}" data-n="${c.name}" tabindex="0" role="button" aria-label="${c.name}: ${c.status}"><path d="M${(c.x - w / 2).toFixed(1)} ${c.y}L${(c.x + w / 2).toFixed(1)} ${c.y}L${(c.x + w / 2 + o).toFixed(1)} ${(c.y - h).toFixed(1)}L${(c.x - w / 2 + o).toFixed(1)} ${(c.y - h).toFixed(1)}Z"/>${lab}</g>`;
-      });
-      s += mapFurniture(M, k, small) + '</svg>';
-      rmap.innerHTML = s;
-      $$('.cp', rmap).forEach(g => {
-        const go = () => {
-          const row = $$('.rb-row').find(r => $('.rb-name', r).firstChild.textContent.trim() === g.dataset.n);
-          if (!row) return;
-          row.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
-          row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1400);
-        };
-        g.addEventListener('click', go);
-        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-      });
-    }
-    drawRoads();
-    addEventListener('resize', debounce(drawRoads, 150));
-    document.addEventListener('ersal:theme', drawRoads);
-    $$('.rb-row').forEach(r => {
-      const name = $('.rb-name', r).firstChild.textContent.trim();
-      r.addEventListener('pointerenter', () => $$('.cp', rmap).forEach(g => g.classList.toggle('on', g.dataset.n === name)));
-      r.addEventListener('pointerleave', () => $$('.cp', rmap).forEach(g => g.classList.remove('on')));
-    });
-  }
-
-  /* ---------- filters: live log and roads board ---------- */
-  function filterGroup(btnSel, itemSel, test, empty) {
-    const btns = $$(btnSel); if (!btns.length) return;
-    btns.forEach(b => b.addEventListener('click', () => {
-      btns.forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on)); });
-      let shown = 0;
-      $$(itemSel).forEach(it => { const ok = b.dataset.f === 'all' || test(it, b.dataset.f); it.hidden = !ok; if (ok) shown++; });
-      if (empty) empty.hidden = shown > 0;
-    }));
-  }
-  filterGroup('.js-lf', '.js-lb .lb-item:not(.pinned)', (it, f) => f === 'health' ? it.dataset.src === 'health' : it.dataset.kind === f);
-  filterGroup('.js-rf', '.js-rb .rb-row', (it, f) => f === 'حاجز' ? (it.dataset.status === 'حاجز' || it.dataset.status === 'أزمة') : it.dataset.status === f, $('.rb-empty'));
-
-  /* ---------- report a checkpoint (prototype: nothing is sent) ---------- */
-  const rep = $('.js-report');
-  if (rep) rep.addEventListener('submit', e => {
-    e.preventDefault();
-    const place = rep.elements.place, msg = $('.rep-msg', rep);
-    if (!place.value.trim()) {
-      place.setAttribute('aria-invalid', 'true'); place.focus();
-      msg.className = 'rep-msg err'; msg.textContent = 'اكتب اسم الحاجز أو المكان أولا.';
-      return;
-    }
-    place.removeAttribute('aria-invalid');
-    msg.className = 'rep-msg';
-    msg.textContent = `نسخة العرض لا ترسل البلاغات. في الموقع يصل بلاغ «${place.value.trim()}: ${rep.elements.st.value}» إلى الدسك للمراجعة قبل ظهوره في اللوحة.`;
-  });
-
-  /* ---------- section: older items open on demand ---------- */
-  $$('.js-more-btn').forEach(b => {
-    const list = b.previousElementSibling; if (!list) return;
-    if (list.children.length <= 10) { b.hidden = true; return; }
-    b.textContent = `عرض كل الأخبار (${list.children.length})`;
-    b.addEventListener('click', () => { list.classList.add('open'); b.hidden = true; const a = list.children[10] && list.children[10].querySelector('a'); if (a) a.focus(); });
-  });
-
-  /* ---------- article: copy link and reading progress ---------- */
-  $$('.js-copy').forEach(b => b.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(location.href.split('?')[0]); b.classList.add('done'); b.setAttribute('aria-label', 'تم نسخ الرابط'); setTimeout(() => { b.classList.remove('done'); b.setAttribute('aria-label', 'نسخ رابط الخبر'); }, 1800); } catch (e) {}
-  }));
-  const prog = $('.read-progress i'), storyEl = $('.story-page');
-  if (prog && storyEl) {
-    const upd = () => {
-      const r = storyEl.getBoundingClientRect(), total = r.height - innerHeight * .6;
-      prog.style.setProperty('--p', Math.max(0, Math.min(1, -r.top / Math.max(total, 1))).toFixed(3));
-    };
-    addEventListener('scroll', upd, { passive: true }); addEventListener('resize', debounce(upd)); upd();
   }
 
   /* ---------- sliders: arrows, drag, and a tuning-scale progress line ---------- */
