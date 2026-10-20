@@ -165,7 +165,7 @@
       groups.forEach(g => { const sec = g.closest('.w-day'); if (sec) sec.hidden = !$$(':scope > :not([hidden])', g).length; });
       if (empty) empty.hidden = shown.length > 0;
       const filtered = state.q || state.v !== 'all';
-      if (count) count.textContent = !shown.length ? '' : [filtered ? results(shown.length) : '', size && pages > 1 ? `الصفحة ${state.p} من ${pages}` : ''].filter(Boolean).join('، ');
+      if (count) count.textContent = shown.length && filtered ? results(shown.length) : '';
       if (pager) {
         if (pages <= 1) pager.innerHTML = '';
         else {
