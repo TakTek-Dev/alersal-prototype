@@ -357,7 +357,7 @@
       if (!words.length) { out.innerHTML = ''; countEl.textContent = ''; return; }
       const hits = index.filter(r => { const h = norm(r.t); return words.every(w => h.includes(w)); });
       countEl.textContent = hits.length ? `${results(hits.length)} لـ«${raw}»` : `لا نتائج لـ«${raw}». جرّب كلمة أقصر أو اسم قرية.`;
-      out.innerHTML = hits.slice(0, 60).map(r => `<li><a href="${esc(r.h)}"${/^https?:/.test(r.h) ? ' rel="noopener"' : ''}>${r.i ? `<span class="ph r11"><img src="${esc(r.i)}" alt="" loading="lazy"></span>` : '<span class="ph r11"></span>'}<span><span class="r-t">${words.length === 1 ? mark(r.t, words) : esc(r.t)}</span><span class="meta"><span>${esc(r.k)}</span>${r.d ? `<span>${esc(r.d)}</span>` : ''}</span></span></a></li>`).join('');
+      out.innerHTML = hits.slice(0, 60).map((r, n) => `<li><a href="${esc(r.h)}"${/^https?:/.test(r.h) ? ' rel="noopener"' : ''}>${r.i ? `<span class="ph r11"><img src="${esc(r.i)}" alt=""${n > 5 ? ' loading="lazy"' : ''}></span>` : '<span class="ph r11"></span>'}<span><span class="r-t">${words.length === 1 ? mark(r.t, words) : esc(r.t)}</span><span class="meta"><span>${esc(r.k)}</span>${r.d ? `<span>${esc(r.d)}</span>` : ''}</span></span></a></li>`).join('');
       const u = new URL(location.href); if (raw) u.searchParams.set('q', raw); else u.searchParams.delete('q'); history.replaceState(null, '', u);
     }
     input.addEventListener('input', debounce(run, 140));
