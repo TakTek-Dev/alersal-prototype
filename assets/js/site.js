@@ -349,15 +349,18 @@
     let index = [];
     try { index = JSON.parse($('#search-index').textContent); } catch (e) {}
     const input = $('.js-sq', sbox), out = $('.js-results', sbox), countEl = $('.js-scount', sbox);
+    const stabs = $$('.js-stabs .tab', sbox);
+    let group = 'all';
+    stabs.forEach(b => b.addEventListener('click', () => { group = b.dataset.v; stabs.forEach(x => x.setAttribute('aria-pressed', String(x === b))); run(); }));
     const q0 = new URLSearchParams(location.search).get('q') || '';
     input.value = q0;
     const mark = (t, words) => { let h = esc(t); words.forEach(w => { if (!w) return; const i = norm(t).indexOf(w); if (i >= 0 && norm(t).length === t.length) h = esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + w.length)) + '</mark>' + esc(t.slice(i + w.length)); }); return h; };
     function run() {
       const raw = input.value.trim(), words = norm(raw).split(/\s+/).filter(Boolean);
       if (!words.length) { out.innerHTML = ''; countEl.textContent = ''; return; }
-      const hits = index.filter(r => { const h = norm(r.t); return words.every(w => h.includes(w)); });
+      const hits = index.filter(r => { const h = norm(r.t); return (group === 'all' || r.g === group) && words.every(w => h.includes(w)); });
       countEl.textContent = hits.length ? `${results(hits.length)} لـ«${raw}»` : `لا نتائج لـ«${raw}». جرّب كلمة أقصر أو اسم قرية.`;
-      out.innerHTML = hits.slice(0, 60).map((r, n) => `<li><a href="${esc(r.h)}"${/^https?:/.test(r.h) ? ' rel="noopener"' : ''}>${r.i ? `<span class="ph r11"><img src="${esc(r.i)}" alt=""${n > 5 ? ' loading="lazy"' : ''}></span>` : '<span class="ph r11"></span>'}<span><span class="r-t">${words.length === 1 ? mark(r.t, words) : esc(r.t)}</span><span class="meta"><span>${esc(r.k)}</span>${r.d ? `<span>${esc(r.d)}</span>` : ''}</span></span></a></li>`).join('');
+      out.innerHTML = hits.slice(0, 60).map((r, n) => `<li><a href="${esc(r.h)}"${/^https?:/.test(r.h) ? ' rel="noopener"' : ''}>${r.i ? `<span class="ph r11"><img src="${esc(r.i)}" alt=""${n > 5 ? ' loading="lazy"' : ''}></span>` : '<span class="ph r11 noimg"><svg class="mk" aria-hidden="true"><use href="#mk"/></svg></span>'}<span><span class="r-t">${words.length === 1 ? mark(r.t, words) : esc(r.t)}</span><span class="meta"><span>${esc(r.k)}</span>${r.d ? `<span>${esc(r.d)}</span>` : ''}</span></span></a></li>`).join('');
       const u = new URL(location.href); if (raw) u.searchParams.set('q', raw); else u.searchParams.delete('q'); history.replaceState(null, '', u);
     }
     input.addEventListener('input', debounce(run, 140));
