@@ -758,3 +758,120 @@ blockquote.pp-q p::before { width: 3px; }
   .w-ph { grid-column: 2; grid-row: 1 / span 2; }
   .places-bars a { grid-template-columns: minmax(0, 1fr) 90px 2.2em; }
 }
+
+/* =====================================================================
+   round 3: home, stories, video, albums and the chrome, after the
+   second critique — footage first on phones, no frame shown twice
+   ===================================================================== */
+.hd-follow { display: none; }
+.hd-logo { display: flex; align-items: center; min-height: 44px; }
+
+/* tap targets reach 44px without moving the line they sit in */
+.crumbs a { min-height: 44px; }
+.meta, .card-meta, .reel-meta, .w-meta { clip-path: inset(-12px calc(2 * var(--sep) + 1px) -12px -4px); }
+a.cat { min-height: 44px; margin-block: -8px; }
+.wire.compact .w-h { padding-block: 6px; margin-block: -6px; }
+
+/* the contact sheet's caption keeps whole words */
+.sheet-cap { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 3.2em; }
+
+/* one material line: time, frame, what it shows */
+.tl li { grid-template-columns: 46px minmax(0, 1fr); align-items: start; }
+.tl a { display: grid; grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 12px; min-height: 56px; color: var(--ink); }
+.tl a .ph { grid-row: 1 / span 2; width: 56px; }
+.tl-t { line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; transition: color .15s ease; }
+.tl a:hover .tl-t { color: var(--blue); }
+.tl-k { grid-column: 2; }
+.tl .badge { --h: 20px; inset-inline-start: 3px; inset-block-end: 3px; gap: 3px; padding-inline: calc(var(--h) * var(--cut-tan) + 3px); }
+.tl .badge > span:not(.sr) { display: none; }
+.tl .badge .fi { width: 9px; height: 9px; }
+.tl .badge .ic { width: 12px; height: 12px; }
+.tl .noimg { display: grid; place-items: center; background: var(--band); }
+.tl .noimg .mk { width: 22px; height: 20px; }
+
+/* a photo lead says what the camera saw */
+.lead-fig figcaption { line-height: 1.7; color: var(--text); max-width: 60ch; }
+.lead-fig figcaption span { display: block; margin-top: 2px; font-size: var(--fs-micro); color: var(--muted); }
+
+/* the story a clip or album belongs to */
+.in-story { margin-top: 36px; }
+.in-card { display: grid; grid-template-columns: 160px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; color: var(--ink); }
+.in-card .ph { grid-row: 1 / span 2; }
+.in-t { font-family: var(--f-display); font-size: 1.125rem; font-weight: 800; line-height: 1.5; color: var(--blue); text-wrap: balance; transition: color .15s ease; }
+.in-d { margin-top: 4px; font-size: .9375rem; line-height: 1.75; color: var(--text); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.in-card:hover .in-t { color: var(--blue-deep); }
+.in-sub { margin-top: 24px; font-size: 1rem; font-weight: 800; color: var(--muted); }
+.in-story .tl { margin-top: 6px; }
+.in-story .go { margin-top: 12px; }
+
+/* video: a portrait clip gets a column its own width, the words get the rest */
+.vp-h { text-wrap: balance; }
+@media (min-width: 1101px) {
+  .vp-grid.is-portrait { grid-template-columns: minmax(0, calc(min(76vh, 780px) * var(--pw))) minmax(0, 1fr); }
+  .vp-grid.is-portrait .vp-frame { --vh: min(76vh, 780px); }
+  .vp-grid.is-portrait .vp-info { max-width: 720px; }
+}
+@media (hover: none), (pointer: coarse) { .vp-keys { display: none; } }
+
+/* albums: whole photos; the strip leaves the screen at the logo's angle */
+.al-stage { container-type: inline-size; }
+.al-reel { --rh: min(clamp(300px, 62vh, 640px), var(--mh), calc((100cqw - var(--al-pad, 0px)) / var(--mar)));
+  height: var(--rh); align-items: center; padding-inline-end: calc(var(--rh) * var(--cut-tan));
+  clip-path: polygon(calc(var(--rh) * var(--cut-tan)) 0, 100% 0, 100% 100%, 0 100%); }
+.al-ph { height: min(var(--rh), var(--nh), calc((100cqw - var(--al-pad, 0px)) / var(--arn))); max-width: none; aspect-ratio: var(--ar); clip-path: none; }
+.al-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px clamp(32px, 5vw, 80px); align-items: start; margin-top: 32px; }
+.al-foot .in-story { margin-top: 0; max-width: 640px; }
+.al-act .share { margin-top: 18px; }
+.albums.small { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 28px 16px; }
+.albums.small .reel-h { font-size: .9375rem; }
+
+/* home: four albums two by two beside eight news lines */
+.split-sec .albums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 1023px) {
+  .hd-nav a[aria-current="page"]::after { inset-inline: 0 auto; }
+  .hd-follow { display: flex; align-items: center; gap: 8px; margin-top: 24px; }
+  .hd-follow > span { font-family: var(--f-display); font-weight: 700; font-size: var(--fs-meta); color: var(--ink); }
+  .hd-nav .hd-follow ul { flex-direction: row; }
+  .hd-nav .hd-follow a { width: 44px; height: 44px; justify-content: center; padding: 0; border-bottom: 0; }
+  .hd-follow .fi { width: 20px; height: 20px; }
+}
+@media (max-width: 860px) {
+  .al-foot { grid-template-columns: minmax(0, 1fr); }
+  .ft-links ul { column-gap: 22px; }
+  .ft-links li + li::before { display: none; }
+}
+@media (max-width: 600px) {
+  /* phones open on the footage: headline, then the frame, then the words */
+  .lead { display: flex; flex-direction: column; padding-top: 22px; }
+  .lead-text, .st .st-head { display: contents; }
+  .lead-h, .st-h { order: 1; font-size: clamp(1.5rem, 1.2rem + 1.6vw, 1.85rem); }
+  .st-h { padding-top: 22px; }
+  .lead .sheet { order: 2; margin-top: 16px; }
+  .st .st-lead, .st.st-tall .st-lead { order: 2; margin: 16px 0 0; }
+  .lead-dek, .st-dek { order: 3; margin-top: 18px; font-size: 1.0625rem; }
+  .lead .meta, .st-head .meta { order: 4; margin-top: 12px; }
+  .lead-act { order: 5; margin-top: 16px; }
+  .st, .st.st-tall { display: flex; flex-direction: column; }
+  .st-grid, .st-body { order: 5; margin-top: 24px; }
+  .st-tall .st-aside { order: 6; }
+  .st .vp-frame { --vh: 66svh; }
+  .st .lead-fig.natural img { max-height: 62svh; }
+
+  /* stories in a list become rows, so a section is not four screens tall */
+  .cards.c3 { gap: 0; border-top: 1px solid var(--rule); }
+  .cards.c3 .card a { display: grid; grid-template-columns: 124px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 14px; padding-block: 14px; border-bottom: 1px solid var(--rule); }
+  .cards.c3 .card .ph { grid-row: 1 / span 2; aspect-ratio: 4 / 3; }
+  .cards.c3 .card-h { margin-top: 0; font-size: 1rem; line-height: 1.6; }
+  .cards.c3 .card-meta { margin-top: 4px; }
+
+  /* scroll rows keep the gutter when they snap */
+  .albums.small, .split-sec .albums { grid-template-columns: none; grid-auto-columns: 42%; }
+  .albums, .reels-row { scroll-padding-inline: var(--gutter); }
+  .al-stage { --al-pad: calc(var(--gutter) * 2); }
+  .al-reel { --rh: min(64svh, 540px, var(--mh), calc((100cqw - var(--al-pad)) / var(--mar))); }
+  .in-card { grid-template-columns: 112px minmax(0, 1fr); column-gap: 14px; }
+  .in-t { font-size: 1rem; }
+}
+
+@media (max-width: 600px) { .reels-row { grid-auto-columns: 42%; } }
